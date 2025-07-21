@@ -39,7 +39,11 @@
             span.value(:class="item.status") {{ item.value }}
     
     footer.dialog-footer
-      .action-buttons
+      .loading-overlay(v-if="isRetrying")
+        .loading-spinner
+          Icon(name="ph:spinner")
+        .loading-text Docker環境を確認しています...
+      .action-buttons(:class="{ 'action-buttons--hidden': isRetrying }")
         button.btn.btn-secondary(@click="close" :disabled="isRetrying") キャンセル
         button.btn.btn-primary(@click="retry" :disabled="isRetrying")
           Icon(name="ph:arrow-clockwise" v-if="isRetrying")
@@ -405,6 +409,7 @@ onMounted(() => {
 }
 
 .dialog-footer {
+  position: relative;
   padding: 16px 24px;
   border-top: 1px solid #f0f0f0;
   background: #fafafa;
@@ -412,10 +417,50 @@ onMounted(() => {
   border-bottom-right-radius: 12px;
 }
 
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(250, 250, 250, 0.95);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  backdrop-filter: blur(2px);
+}
+
+.loading-spinner {
+  font-size: 32px;
+  color: #1890ff;
+  margin-bottom: 8px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #595959;
+}
+
 .action-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  transition: opacity 0.2s ease;
+}
+
+.action-buttons--hidden {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .btn {
