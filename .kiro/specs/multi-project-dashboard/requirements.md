@@ -40,13 +40,15 @@ ProjectLensは、BacklogのMCP Serverを活用して複数プロジェクトの�
 
 ### 要件4：Backlog MCP Server連携
 
-**ユーザーストーリー：** システム管理者として、BacklogのAPIを通じてチケット情報を安全に取得したいので、MCP Serverを介した連携を実現したい
+**ユーザーストーリー：** システム管理者として、複数のBacklogワークスペースのAPIを通じてチケット情報を安全に取得したいので、MCP Serverを介した連携を実現したい
 
 #### 受け入れ基準
 
 1. WHEN アプリケーションが起動した時 THEN システムはDocker上で動作するBacklog MCP Serverに接続する
-2. WHEN MCP Serverに接続した時 THEN システムはBacklog APIを通じてチケット情報を取得する
-3. IF MCP Serverとの接続に失敗した場合 THEN システムは適切なエラーメッセージを表示し、再接続オプションを提供する
+2. WHEN MCP Serverに接続した時 THEN システムは設定された各BacklogワークスペースのAPIを通じてチケット情報を取得する
+3. WHEN ユーザーが設定画面でBacklog設定を開いた時 THEN システムは複数のワークスペース（BACKLOG_DOMAIN、BACKLOG_API_KEY）を設定できるインターフェースを提供する
+4. WHEN 新しいワークスペースが追加された時 THEN システムは設定を暗号化してローカルに保存し、MCP Serverの設定に反映する
+5. IF MCP Serverとの接続に失敗した場合 THEN システムは適切なエラーメッセージを表示し、再接続オプションを提供する
 
 ### 要件5：マルチAIプロバイダー対応
 
