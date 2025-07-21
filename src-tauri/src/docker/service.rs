@@ -33,13 +33,19 @@ impl DockerService {
     /// - `Ok(false)` - Dockerが利用不可能
     /// - `Err(String)` - エラーメッセージ
     pub async fn is_docker_available(&self) -> Result<bool, String> {
-        // Dockerコマンド実行可能性の検証
-        let output = Command::new("docker")
-            .arg("--version")
-            .output()
-            .map_err(|e| format!("Dockerコマンド実行エラー: {}", e))?;
-            
-        Ok(output.status.success())
+        // タイムアウト付きでDockerコマンド実行
+        let result = time::timeout(Duration::from_secs(10), async {
+            Command::new("docker")
+                .arg("--version")
+                .output()
+                .map_err(|e| format!("Dockerコマンド実行エラー: {}", e))
+        }).await;
+        
+        match result {
+            Ok(Ok(output)) => Ok(output.status.success()),
+            Ok(Err(e)) => Err(e),
+            Err(_) => Err("Dockerコマンドがタイムアウトしました".to_string()),
+        }
     }
     
     /// Dockerのバージョン情報を取得
@@ -48,17 +54,25 @@ impl DockerService {
     /// - `Ok(String)` - Dockerのバージョン情報
     /// - `Err(String)` - エラーメッセージ
     pub async fn get_docker_version(&self) -> Result<String, String> {
-        // Dockerバージョン取得
-        let output = Command::new("docker")
-            .arg("--version")
-            .output()
-            .map_err(|e| format!("Dockerコマンド実行エラー: {}", e))?;
-            
-        if output.status.success() {
-            let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
-            Ok(version)
-        } else {
-            Err(format!("Dockerコマンド失敗: {}", String::from_utf8_lossy(&output.stderr)))
+        // タイムアウト付きでDockerバージョン取得
+        let result = time::timeout(Duration::from_secs(10), async {
+            Command::new("docker")
+                .arg("--version")
+                .output()
+                .map_err(|e| format!("Dockerコマンド実行エラー: {}", e))
+        }).await;
+        
+        match result {
+            Ok(Ok(output)) => {
+                if output.status.success() {
+                    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                    Ok(version)
+                } else {
+                    Err(format!("Dockerコマンド失敗: {}", String::from_utf8_lossy(&output.stderr)))
+                }
+            }
+            Ok(Err(e)) => Err(e),
+            Err(_) => Err("Dockerバージョン取得がタイムアウトしました".to_string()),
         }
     }
     
@@ -69,12 +83,19 @@ impl DockerService {
     /// - `Ok(false)` - Docker Engineが停止中
     /// - `Err(String)` - エラーメッセージ
     pub async fn is_docker_running(&self) -> Result<bool, String> {
-        let output = Command::new("docker")
-            .arg("info")
-            .output()
-            .map_err(|e| format!("Dockerコマンド実行エラー: {}", e))?;
-            
-        Ok(output.status.success())
+        // タイムアウト付きでDocker実行状態確認
+        let result = time::timeout(Duration::from_secs(10), async {
+            Command::new("docker")
+                .arg("info")
+                .output()
+                .map_err(|e| format!("Dockerコマンド実行エラー: {}", e))
+        }).await;
+        
+        match result {
+            Ok(Ok(output)) => Ok(output.status.success()),
+            Ok(Err(e)) => Err(e),
+            Err(_) => Err("Docker実行状態確認がタイムアウトしました".to_string()),
+        }
     }
     
     /// MCP Serverコンテナの状態を確認
