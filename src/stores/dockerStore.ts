@@ -4,12 +4,16 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
+import { useNotificationStore } from './notificationStore';
 import type { ContainerStatus, DockerResponse } from '~/types/docker';
 
 /**
  * Dockerストア
  */
 export const useDockerStore = defineStore('docker', () => {
+  // 依存関係
+  const notificationStore = useNotificationStore();
+  
   // 状態
   const isDockerAvailable = ref<boolean | null>(null);
   const isDockerRunning = ref<boolean | null>(null);
@@ -17,6 +21,8 @@ export const useDockerStore = defineStore('docker', () => {
   const mcpServerStatus = ref<ContainerStatus | null>(null);
   const isLoading = ref<boolean>(false);
   const error = ref<string | null>(null);
+  const showErrorDialog = ref<boolean>(false);
+  const errorDialogType = ref<'not-installed' | 'not-running' | 'connection-failed'>('not-installed');
 
   // 算出プロパティ
   const isMcpServerRunning = computed(() => mcpServerStatus.value?.isRunning || false);
@@ -45,10 +51,16 @@ export const useDockerStore = defineStore('docker', () => {
     try {
       const available = await invoke<boolean>('check_docker_available');
       isDockerAvailable.value = available;
+      
+      if (!available) {
+        handleDockerError('not-installed');
+      }
+      
       return { success: true, data: available };
     } catch (err) {
       const errorMessage = `Dockerの可用性確認中にエラーが発生しました: ${err}`;
       error.value = errorMessage;
+      handleDockerError('connection-failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       isLoading.value = false;
@@ -69,10 +81,16 @@ export const useDockerStore = defineStore('docker', () => {
     try {
       const running = await invoke<boolean>('is_docker_running');
       isDockerRunning.value = running;
+      
+      if (!running) {
+        handleDockerError('not-running');
+      }
+      
       return { success: true, data: running };
     } catch (err) {
       const errorMessage = `Docker実行状態の確認中にエラーが発生しました: ${err}`;
       error.value = errorMessage;
+      handleDockerError('connection-failed', errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       isLoading.value = false;
@@ -223,6 +241,50 @@ export const useDockerStore = defineStore('docker', () => {
     await checkMcpServerStatus();
   }
 
+  /**
+   * Dockerエラーを処理
+   */
+  function handleDockerError(errorType: 'not-installed' | 'not-running' | 'connection-failed', message?: string): void {
+    errorDialogType.value = errorType;
+    
+    // 通知を表示
+    const notificationId = notificationStore.dockerError(errorType, message);
+    
+    // エラーダイアログの表示を管理
+    showErrorDialog.value = true;
+  }
+
+  /**
+   * エラーダイアログを閉じる
+   */
+  function closeErrorDialog(): void {
+    showErrorDialog.value = false;
+  }
+
+  /**
+   * Docker環境の再試行
+   */
+  async function retryDockerEnvironment(): Promise<boolean> {
+    try {
+      await initializeDockerEnvironment();
+      
+      // エラーが解決された場合はダイアログを閉じる
+      if (isDockerAvailable.value && isDockerRunning.value) {
+        closeErrorDialog();
+        notificationStore.success(
+          'Docker接続成功',
+          'Dockerとの接続が正常に確立されました。'
+        );
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Docker再試行中にエラーが発生しました:', error);
+      return false;
+    }
+  }
+
   return {
     // 状態
     isDockerAvailable,
@@ -231,6 +293,8 @@ export const useDockerStore = defineStore('docker', () => {
     mcpServerStatus,
     isLoading,
     error,
+    showErrorDialog,
+    errorDialogType,
 
     // 算出プロパティ
     isMcpServerRunning,
@@ -246,5 +310,10 @@ export const useDockerStore = defineStore('docker', () => {
     stopMcpServer,
     checkMcpServerExists,
     initializeDockerEnvironment,
+    
+    // エラーハンドリング
+    handleDockerError,
+    closeErrorDialog,
+    retryDockerEnvironment,
   };
 });
