@@ -22,3 +22,9 @@ logs
 .env
 .env.*
 !.env.example
+
+tmp/
+
+# Reviews
+reviews/*
+!reviews/.gitkeep
