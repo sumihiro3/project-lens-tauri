@@ -4,7 +4,7 @@
 クロスプラットフォーム対応（Windows/macOS/Linux）のTauriフレームワークを使用したデスクトップアプリケーション。
 
 ## 技術スタック
-- **フロントエンド**: Tauri + Vue.js (Nuxt3) + TypeScript
+- **フロントエンド**: Tauri + Vue.js (Nuxt3) + TypeScript + Pug
 - **バックエンド**: Rust (Tauriバックエンド)
 - **AI統合**: Mastra（LangChain代替）
 - **外部連携**: Backlog MCP Server（Docker経由）
@@ -110,3 +110,10 @@ docker run -d --name backlog-mcp-server [image]
 - APIキーは暗号化保存必須
 - MCP ServerはDocker外部依存（アプリに内包しない）
 - 接続エラー時の適切なハンドリング実装
+## テンプレートエン
+ジン
+- **Pug**: Vue.jsコンポーネントのテンプレート記述に使用
+  - インデントベースの簡潔な構文
+  - HTMLよりも少ないコード量でテンプレート作成可能
+  - クラス名やID指定が簡略化（例: `.class-name`、`#id-name`）
+  - コメントは`//-`で記述
