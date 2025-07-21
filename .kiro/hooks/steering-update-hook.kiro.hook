@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Steering自動更新",
+  "description": "コードファイルが保存された際に、Steeringの内容（特にstructure、tech）を見直し、必要に応じて更新します。フロントエンド（Nuxt3）側の変更時は、ページやコンポーネントの情報をtechに記載します。",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.vue",
+      "src/**/*.ts",
+      "src/**/*.js",
+      "src-tauri/src/**/*.rs",
+      "nuxt.config.ts",
+      "package.json",
+      "Cargo.toml"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "コードファイルが変更されました。以下の点を確認してSteeringファイル（structure.md、tech.md）の更新が必要かどうか判断し、必要であれば更新してください：\n\n1. **structure.md の確認・更新**：\n   - 新しいディレクトリやファイルが追加されていないか\n   - アーキテクチャパターンに変更がないか\n   - 画面構成やモジュール構成に変更がないか\n\n2. **tech.md の確認・更新**：\n   - 新しい技術スタックや依存関係が追加されていないか\n   - システム構成に変更がないか\n   - 特にフロントエンド（Nuxt3/Vue）の変更の場合：\n     - 新しいページの役割、プロパティ、Emits情報\n     - 新しいコンポーネントの役割、プロパティ、Emits情報\n     - 状態管理やコンポーザブルの変更\n\n変更されたファイルを分析し、Steeringファイルに反映すべき情報があれば適切に更新してください。"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Markdown Linter",
+  "description": "Markdownファイルを保存したときに、Markdownの構文チェックとスタイルガイドラインの検証を自動実行します",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "**/*.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "保存されたMarkdownファイルに対してLinterを実行してください。構文エラー、スタイルの問題、リンクの検証を行い、問題があれば修正提案を提供してください。"
+  }
+}
