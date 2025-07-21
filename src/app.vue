@@ -16,7 +16,7 @@ div
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onErrorCaptured } from 'vue'
 import { useDockerStore } from '~/stores/dockerStore'
 import { useNotificationStore } from '~/stores/notificationStore'
 import SystemNotificationToast from '~/components/common/SystemNotificationToast.vue'
@@ -25,6 +25,37 @@ import DockerErrorDialog from '~/components/settings/DockerErrorDialog.vue'
 // ストアの初期化
 const dockerStore = useDockerStore()
 const notificationStore = useNotificationStore()
+
+// エラー境界の実装
+onErrorCaptured((error, instance, info) => {
+  console.error('アプリケーションエラー:', error)
+  console.error('エラー情報:', info)
+  console.error('コンポーネントインスタンス:', instance)
+  
+  // 通知でエラーを表示
+  notificationStore.error(
+    'アプリケーションエラー',
+    '予期しないエラーが発生しました。アプリケーションを再起動してください。',
+    { 
+      duration: 0, // 永続表示
+      actions: [
+        {
+          label: 'リロード',
+          type: 'primary',
+          handler: () => window.location.reload()
+        },
+        {
+          label: '閉じる',
+          type: 'default',
+          dismissOnClick: true
+        }
+      ]
+    }
+  )
+  
+  // エラーを伝播させない（falseを返すことでエラーをキャッチ）
+  return false
+})
 
 // アプリケーション初期化
 onMounted(async () => {
