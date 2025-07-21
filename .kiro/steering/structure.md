@@ -11,6 +11,7 @@ project-root/
 │   │   ├── main.rs     # Tauriメインエントリーポイント
 │   │   ├── ai/         # Mastra AI統合
 │   │   ├── crypto/     # APIキー暗号化
+│   │   ├── docker/     # Docker環境チェックと管理
 │   │   ├── storage/    # ローカルデータ管理
 │   │   └── mcp/        # MCP Server通信
 │   └── Cargo.toml      # Rust依存関係

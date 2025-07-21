@@ -6,7 +6,7 @@ use bollard::container::{ListContainersOptions, StartContainerOptions};
 use bollard::models::*;
 
 // 公開用の構造体定義
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ContainerStatus {
     pub name: String,
     pub state: String,
