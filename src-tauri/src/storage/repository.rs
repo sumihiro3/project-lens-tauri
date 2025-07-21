@@ -1,7 +1,7 @@
 // リポジトリ
 // データベースとのCRUD操作を担当
 
-use crate::models::*;
+// モデルのインポートは必要に応じて追加
 use rusqlite::{Connection, Result};
 use std::sync::{Arc, Mutex};
 

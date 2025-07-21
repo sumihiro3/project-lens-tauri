@@ -6,4 +6,4 @@ pub mod repository;
 pub mod schema;
 
 pub use service::StorageService;
-pub use repository::{TicketRepository, ProjectRepository, SettingsRepository};
+pub use repository::{TicketRepository, ConfigRepository};

@@ -1,6 +1,7 @@
 // MCP Client実装
 
-use super::protocol::{MCPRequest, MCPResponse, BacklogWorkspace};
+use super::protocol::BacklogWorkspace;
+// 必要なインポートは実装時に追加
 use crate::models::Ticket;
 use reqwest::Client;
 use std::sync::Arc;
@@ -29,6 +30,21 @@ impl MCPClient {
     
     pub async fn get_user_assignments(&self, workspace: &BacklogWorkspace, user_id: &str) -> Result<Vec<String>, String> {
         // ユーザーのアサイン情報取得
+        todo!()
+    }
+    
+    pub async fn get_workspaces(&self) -> Result<Vec<BacklogWorkspace>, String> {
+        // ワークスペース一覧取得
+        todo!()
+    }
+    
+    pub async fn get_user_tickets(&self, workspace: &BacklogWorkspace, user_id: &str) -> Result<Vec<crate::models::Ticket>, String> {
+        // ユーザーのチケット一覧取得
+        todo!()
+    }
+    
+    pub async fn get_projects(&self, workspace: &BacklogWorkspace) -> Result<Vec<crate::models::Project>, String> {
+        // プロジェクト一覧取得
         todo!()
     }
 }

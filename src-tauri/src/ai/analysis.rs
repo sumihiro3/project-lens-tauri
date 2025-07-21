@@ -26,9 +26,9 @@ pub struct UrgencyScore {
     pub factors: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Recommendation {
-    pub ticket: Ticket,
+    pub ticket_id: String,
     pub priority_score: f32, // 0.0 - 1.0
     pub reasoning: String,
     pub suggested_order: usize,

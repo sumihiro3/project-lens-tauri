@@ -1,8 +1,8 @@
 // 暗号化サービス実装
 
-use ring::aead::{Aad, BoundKey, Nonce, NonceSequence, OpeningKey, SealingKey, UnboundKey, AES_256_GCM};
 use ring::pbkdf2;
-use ring::rand::{SecureRandom, SystemRandom};
+use ring::rand::SystemRandom;
+// 必要なインポートは実装時に追加
 use std::num::NonZeroU32;
 
 pub struct CryptoService {

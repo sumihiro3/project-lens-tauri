@@ -4,6 +4,21 @@
 use bollard::Docker;
 use bollard::container::{ListContainersOptions, StartContainerOptions};
 use bollard::models::*;
+
+// 公開用の構造体定義
+#[derive(Debug, Clone)]
+pub struct ContainerStatus {
+    pub name: String,
+    pub state: String,
+    pub is_running: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct ContainerConfig {
+    pub name: String,
+    pub image: String,
+    pub ports: Vec<String>,
+}
 use std::collections::HashMap;
 use std::default::Default;
 

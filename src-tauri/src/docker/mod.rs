@@ -5,4 +5,5 @@ pub mod service;
 pub mod container;
 
 pub use service::DockerService;
+pub use container::ContainerManager;
 pub use container::{ContainerStatus, ContainerConfig};

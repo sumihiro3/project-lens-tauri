@@ -2,6 +2,7 @@
 
 use crate::models::Ticket;
 use super::{OpenAIProvider, ClaudeProvider, GeminiProvider, AnalysisResult, Recommendation};
+use super::provider::AIProvider;
 
 pub enum AIProviderType {
     OpenAI(OpenAIProvider),

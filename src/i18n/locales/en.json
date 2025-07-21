@@ -1,0 +1,69 @@
+{
+  "common": {
+    "appName": "ProjectLens",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to ProjectLens",
+    "urgentTasks": "Urgent Tasks",
+    "todayRecommended": "Today's Recommended Tasks",
+    "weeklyPlan": "Weekly Work Plan",
+    "aiAdvice": "AI Advice",
+    "notifications": "Notifications",
+    "noTasks": "No tasks available",
+    "viewAll": "View All"
+  },
+  "settings": {
+    "title": "Settings",
+    "ai": {
+      "title": "AI Settings",
+      "provider": "AI Provider",
+      "apiKey": "API Key",
+      "model": "Model"
+    },
+    "backlog": {
+      "title": "Backlog Settings",
+      "domain": "Domain",
+      "apiKey": "API Key",
+      "projects": "Projects"
+    },
+    "projectWeight": {
+      "title": "Project Weight Settings",
+      "weight": "Weight (1-10)"
+    },
+    "display": {
+      "title": "Display Settings",
+      "theme": "Theme",
+      "layout": "Layout",
+      "language": "Language"
+    },
+    "data": {
+      "title": "Data Management",
+      "cache": "Cache",
+      "clearCache": "Clear Cache",
+      "privacy": "Privacy"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register"
+  },
+  "errors": {
+    "connectionFailed": "Connection failed",
+    "apiError": "API error occurred",
+    "invalidCredentials": "Invalid credentials",
+    "permissionDenied": "Permission denied"
+  }
+}

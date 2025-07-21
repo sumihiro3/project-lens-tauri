@@ -1,0 +1,69 @@
+{
+  "common": {
+    "appName": "ProjectLens",
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "retry": "再試行",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "confirm": "確認",
+    "back": "戻る",
+    "next": "次へ"
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "welcome": "ようこそ、ProjectLensへ",
+    "urgentTasks": "緊急タスク",
+    "todayRecommended": "今日のおすすめタスク",
+    "weeklyPlan": "今週の作業計画",
+    "aiAdvice": "AIアドバイス",
+    "notifications": "通知",
+    "noTasks": "タスクはありません",
+    "viewAll": "すべて表示"
+  },
+  "settings": {
+    "title": "設定",
+    "ai": {
+      "title": "AI設定",
+      "provider": "AIプロバイダー",
+      "apiKey": "APIキー",
+      "model": "モデル"
+    },
+    "backlog": {
+      "title": "Backlog設定",
+      "domain": "ドメイン",
+      "apiKey": "APIキー",
+      "projects": "プロジェクト"
+    },
+    "projectWeight": {
+      "title": "プロジェクト重み設定",
+      "weight": "重み（1-10）"
+    },
+    "display": {
+      "title": "表示設定",
+      "theme": "テーマ",
+      "layout": "レイアウト",
+      "language": "言語"
+    },
+    "data": {
+      "title": "データ管理",
+      "cache": "キャッシュ",
+      "clearCache": "キャッシュをクリア",
+      "privacy": "プライバシー"
+    }
+  },
+  "auth": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "register": "登録"
+  },
+  "errors": {
+    "connectionFailed": "接続に失敗しました",
+    "apiError": "APIエラーが発生しました",
+    "invalidCredentials": "認証情報が無効です",
+    "permissionDenied": "権限がありません"
+  }
+}

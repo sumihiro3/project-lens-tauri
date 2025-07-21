@@ -13,13 +13,35 @@
     "windows": [
       {
         "title": "ProjectLens",
-        "width": 1600,
-        "height": 900
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1200,
+        "minHeight": 700,
+        "resizable": true,
+        "maximizable": true,
+        "minimizable": true,
+        "closable": true,
+        "center": true,
+        "decorations": true,
+        "alwaysOnTop": false,
+        "fullscreen": false,
+        "transparent": false,
+        "visible": true,
+        "skipTaskbar": false,
+        "theme": "Light",
+        "titleBarStyle": "Visible",
+        "hiddenTitle": false,
+        "acceptFirstMouse": false,
+        "tabbingIdentifier": null
       }
     ],
     "security": {
-      "csp": null
-    }
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:* https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com;",
+      "dangerousDisableAssetCspModification": false,
+      "freezePrototype": true
+    },
+    "macOSPrivateApi": false,
+    "withGlobalTauri": false
   },
   "bundle": {
     "active": true,
@@ -30,6 +52,21 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "Productivity",
+    "shortDescription": "Multi-project dashboard with AI-powered task prioritization",
+    "longDescription": "ProjectLens helps you manage multiple Backlog projects with AI-powered task prioritization and intelligent recommendations.",
+    "copyright": "Copyright © 2025 ProjectLens",
+    "licenseFile": null,
+    "externalBin": [],
+    "resources": []
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [],
+      "dialog": true,
+      "pubkey": ""
+    }
   }
 }

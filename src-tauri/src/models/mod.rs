@@ -4,7 +4,7 @@
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Ticket {
     pub id: String,
     pub project_id: String,
@@ -22,7 +22,7 @@ pub struct Ticket {
     pub due_date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TicketStatus {
     Open,
     InProgress,
@@ -31,7 +31,7 @@ pub enum TicketStatus {
     Pending,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Priority {
     Low,
     Normal,
@@ -39,7 +39,7 @@ pub enum Priority {
     Critical,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: String,
     pub name: String,
@@ -47,7 +47,7 @@ pub struct User {
     pub icon: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Comment {
     pub id: String,
     pub content: String,
@@ -62,6 +62,17 @@ pub struct ProjectWeight {
     pub project_name: String,
     pub workspace_name: String,
     pub weight_score: u8, // 1-10
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Project {
+    pub id: String,
+    pub name: String,
+    pub key: String,
+    pub description: Option<String>,
+    pub workspace_name: String,
+    pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 

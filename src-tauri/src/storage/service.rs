@@ -1,7 +1,7 @@
 // ストレージサービス
 // データベース操作の高レベルインターフェースを提供
 
-use crate::models::*;
+// use crate::models::*; // 現在未使用
 use rusqlite::Connection;
 use std::path::Path;
 use std::sync::{Arc, Mutex};

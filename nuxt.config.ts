@@ -37,6 +37,57 @@ export default defineNuxtConfig({
   ],
 
   /**
+   * Pinia設定
+   * 状態管理の詳細設定
+   */
+  pinia: {
+    storesDirs: ['./src/stores/**']
+  },
+
+  /**
+   * 多言語化設定
+   * 日本語をデフォルト言語として設定
+   */
+  i18n: {
+    defaultLocale: 'ja',
+    locales: [
+      {
+        code: 'ja',
+        name: '日本語',
+        file: 'ja.json'
+      },
+      {
+        code: 'en',
+        name: 'English',
+        file: 'en.json'
+      }
+    ],
+    lazy: true,
+    langDir: 'i18n/locales/',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root'
+    }
+  },
+
+  /**
+   * ランタイム設定
+   * 環境変数の公開設定
+   */
+  runtimeConfig: {
+    // プライベート設定（サーバーサイドのみ）
+    private: {},
+    // パブリック設定（クライアントサイドでも利用可能）
+    public: {
+      appName: 'ProjectLens',
+      appVersion: '0.1.0',
+      isDevelopment: process.env.NODE_ENV === 'development'
+    }
+  },
+
+  /**
    * Vite設定（Vuetify用カスタマイズ）
    * デバッグフラグの無効化とSSRでのVuetify外部化設定
    */
@@ -59,6 +110,25 @@ export default defineNuxtConfig({
     'vuetify/lib/styles/main.sass',           // Vuetifyメインスタイル
     '@mdi/font/css/materialdesignicons.css'   // Material Designアイコン
   ],
+
+  /**
+   * アプリケーション設定
+   * メタ情報とヘッド設定
+   */
+  app: {
+    head: {
+      title: 'ProjectLens',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'description', content: 'Multi-project dashboard with AI-powered task prioritization' },
+        { name: 'format-detection', content: 'telephone=no' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      ]
+    }
+  },
 
 
 

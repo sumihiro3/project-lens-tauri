@@ -1,7 +1,7 @@
 // MCP通信プロトコル定義
 
 use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc};
+// 必要なインポートは実装時に追加
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MCPRequest {
