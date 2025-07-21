@@ -14,7 +14,6 @@
 - OpenAI API
 - Anthropic Claude API
 - Google Gemini API
-- ローカルAI（Ollama）
 
 ## 主要技術要件
 - **プライバシー重視**: チケット内容はローカルでのみ処理
@@ -47,14 +46,14 @@
                      ↕
 ┌─ External Services ───────────────────────┐
 │ ・Backlog API                             │
-│ ・AI API (OpenAI/Claude/Gemini/Ollama)    │
+│ ・AI API (OpenAI/Claude/Gemini)           │
 └───────────────────────────────────────────┘
 ```
 
 ## 開発フェーズ
 
 ### Phase 1: ベータ版MVP（3ヶ月）
-- 基本機能（ローカルAI + ユーザーAPI）
+- 基本機能（ユーザーAPI使用）
 - フリープランのみ
 - Backlog MCP Server連携
 - フィードバック収集機能
