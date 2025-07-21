@@ -1,11 +1,16 @@
 // AIサービス実装
 
 use crate::models::Ticket;
-use super::{AIProvider, AnalysisResult, Recommendation};
-use std::sync::Arc;
+use super::{OpenAIProvider, ClaudeProvider, GeminiProvider, AnalysisResult, Recommendation};
+
+pub enum AIProviderType {
+    OpenAI(OpenAIProvider),
+    Claude(ClaudeProvider),
+    Gemini(GeminiProvider),
+}
 
 pub struct AIService {
-    provider: Arc<dyn AIProvider>,
+    provider: AIProviderType,
     config: AIConfig,
 }
 
@@ -16,15 +21,23 @@ pub struct AIConfig {
 }
 
 impl AIService {
-    pub fn new(provider: Arc<dyn AIProvider>, config: AIConfig) -> Self {
+    pub fn new(provider: AIProviderType, config: AIConfig) -> Self {
         Self { provider, config }
     }
     
     pub async fn analyze_tickets(&self, tickets: Vec<Ticket>) -> Result<AnalysisResult, String> {
-        self.provider.analyze_tickets(tickets).await
+        match &self.provider {
+            AIProviderType::OpenAI(provider) => provider.analyze_tickets(tickets).await,
+            AIProviderType::Claude(provider) => provider.analyze_tickets(tickets).await,
+            AIProviderType::Gemini(provider) => provider.analyze_tickets(tickets).await,
+        }
     }
     
     pub async fn recommend_priorities(&self, analysis: AnalysisResult) -> Result<Vec<Recommendation>, String> {
-        self.provider.recommend_priorities(analysis).await
+        match &self.provider {
+            AIProviderType::OpenAI(provider) => provider.recommend_priorities(analysis).await,
+            AIProviderType::Claude(provider) => provider.recommend_priorities(analysis).await,
+            AIProviderType::Gemini(provider) => provider.recommend_priorities(analysis).await,
+        }
     }
 }

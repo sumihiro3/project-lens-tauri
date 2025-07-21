@@ -27,11 +27,13 @@ export default defineNuxtConfig({
 
   /**
    * Nuxtモジュール設定
-   * 多言語化、リンターのモジュールを組み込み
+   * 多言語化、リンター、状態管理、アイコンのモジュールを組み込み
    */
   modules: [
     '@nuxtjs/i18n',    // 多言語化サポート
-    '@nuxt/eslint'     // コード品質管理（ESLint）
+    '@nuxt/eslint',    // コード品質管理（ESLint）
+    '@pinia/nuxt',     // 状態管理（Pinia）
+    '@nuxt/icon'       // アイコン管理
   ],
 
   /**

@@ -12,7 +12,7 @@
         - 各モジュールの基本ファイル構造とmod.rsの設定
         - _要件: 7.1, 7.2, 7.3_
 
-    - [ ] 1.3 必要な依存関係の追加
+    - [x] 1.3 必要な依存関係の追加
         - Rust: rusqlite, ring, reqwest, tokio, thiserror, bollardの追加
         - フロントエンド: @pinia/nuxt, dayjs, @nuxt/iconの追加
         - 開発用依存関係の整備

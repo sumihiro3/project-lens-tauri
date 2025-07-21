@@ -22,4 +22,20 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# データベース関連
+rusqlite = { version = "0.30.0", features = ["bundled"] }
+# 暗号化関連
+ring = "0.17.7"
+# HTTP通信関連
+reqwest = { version = "0.12.1", features = ["json"] }
+# 非同期処理
+tokio = { version = "1.36.0", features = ["full"] }
+# エラーハンドリング
+thiserror = "1.0.58"
+# Docker API
+bollard = "0.16.0"
+# 日時処理
+chrono = { version = "0.4.34", features = ["serde"] }
+# 非同期トレイト
+async-trait = "0.1.77"
 

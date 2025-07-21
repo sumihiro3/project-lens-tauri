@@ -1,36 +1,36 @@
-// AI分析結果の定義
+// AI分析結果モデル
 
 use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Utc};
+use crate::models::Ticket;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisResult {
-    pub ticket_analyses: Vec<TicketAnalysis>,
-    pub timestamp: String,
+    pub analyzed_at: DateTime<Utc>,
+    pub ticket_count: usize,
+    pub categories: Vec<TaskCategory>,
+    pub urgency_scores: Vec<UrgencyScore>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TicketAnalysis {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TaskCategory {
+    pub name: String,
+    pub ticket_ids: Vec<String>,
+    pub description: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UrgencyScore {
     pub ticket_id: String,
-    pub urgency_score: f32,
-    pub complexity_score: f32,
-    pub user_relevance_score: f32,
-    pub project_weight_factor: f32,
-    pub final_priority_score: f32,
-    pub category: TaskCategory,
+    pub score: f32, // 0.0 - 1.0
+    pub factors: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Recommendation {
-    pub ticket_id: String,
-    pub priority_score: f32,
-    pub recommendation_reason: String,
-    pub category: TaskCategory,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum TaskCategory {
-    Urgent,
-    Recommended,
-    Related,
-    Normal,
+    pub ticket: Ticket,
+    pub priority_score: f32, // 0.0 - 1.0
+    pub reasoning: String,
+    pub suggested_order: usize,
+    pub time_estimate: Option<String>,
 }
