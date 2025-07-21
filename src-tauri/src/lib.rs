@@ -1,3 +1,11 @@
+// ProjectLens モジュール定義
+pub mod ai;
+pub mod crypto;
+pub mod storage;
+pub mod mcp;
+pub mod docker;
+pub mod models;
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {

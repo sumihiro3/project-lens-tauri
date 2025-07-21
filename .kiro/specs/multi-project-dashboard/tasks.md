@@ -6,12 +6,12 @@
         - アプリケーション識別子とメタデータの統一
         - _要件: 7.1, 7.2, 7.3_
   
-    - [ ] 1.2 ProjectLens用ディレクトリ構造の構築
+    - [x] 1.2 ProjectLens用ディレクトリ構造の構築
         - フロントエンド: components/dashboard, components/settings, stores, types, utilsディレクトリの作成
         - バックエンド: ai, crypto, storage, mcp, docker, modelsモジュールディレクトリの作成
         - 各モジュールの基本ファイル構造とmod.rsの設定
         - _要件: 7.1, 7.2, 7.3_
-    
+
     - [ ] 1.3 必要な依存関係の追加
         - Rust: rusqlite, ring, reqwest, tokio, thiserror, bollardの追加
         - フロントエンド: @pinia/nuxt, dayjs, @nuxt/iconの追加
