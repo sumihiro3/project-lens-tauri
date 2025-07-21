@@ -1,10 +1,28 @@
 # ProjectLens 実装タスクリスト
 
 - [ ] 1. プロジェクト基盤とコア構造の構築
-  - Tauriプロジェクトの初期化とNuxt3フロントエンドの統合
-  - 基本的なディレクトリ構造とモジュール分割の実装
-  - 開発環境とビルド設定の構成
-  - _要件: 7.1, 7.2, 7.3_
+    - [x] 1.1 プロジェクトメタデータの更新
+        - package.json、tauri.conf.jsonのプロジェクト名を「ProjectLens」に変更
+        - アプリケーション識別子とメタデータの統一
+        - _要件: 7.1, 7.2, 7.3_
+  
+    - [ ] 1.2 ProjectLens用ディレクトリ構造の構築
+        - フロントエンド: components/dashboard, components/settings, stores, types, utilsディレクトリの作成
+        - バックエンド: ai, crypto, storage, mcp, docker, modelsモジュールディレクトリの作成
+        - 各モジュールの基本ファイル構造とmod.rsの設定
+        - _要件: 7.1, 7.2, 7.3_
+    
+    - [ ] 1.3 必要な依存関係の追加
+        - Rust: rusqlite, ring, reqwest, tokio, thiserror, bollardの追加
+        - フロントエンド: @pinia/nuxt, dayjs, @nuxt/iconの追加
+        - 開発用依存関係の整備
+        - _要件: 7.1, 7.2, 7.3_
+  
+    - [ ] 1.4 基本設定ファイルの調整
+        - Tauri設定: ウィンドウサイズ、セキュリティ設定の調整
+        - Nuxt設定: Pinia、必要なモジュールの追加
+        - 環境変数管理用の.env.exampleファイル作成
+        - _要件: 7.1, 7.2, 7.3_
 
 - [ ] 2. Docker環境チェック機能の実装
   - [ ] 2.1 Docker可用性チェックサービスの作成
