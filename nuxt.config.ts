@@ -8,6 +8,10 @@ export default defineNuxtConfig({
   ssr: false,
   srcDir: 'src/',
 
+  devServer: {
+    port: 8765
+  },
+
   /**
    * ビルド設定
    * Vuetifyをトランスパイル対象に追加し、ESモジュールをCommonJSに変換

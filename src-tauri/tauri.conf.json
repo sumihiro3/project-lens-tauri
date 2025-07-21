@@ -5,7 +5,7 @@
   "identifier": "com.projectlens.app",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:3000",
+    "devUrl": "http://localhost:8765",
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn generate"
   },
