@@ -118,6 +118,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  // 全通知のタイマーをクリーンアップ
+  notificationStore.dismissAll()
 })
 </script>
 
