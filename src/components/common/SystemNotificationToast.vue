@@ -9,10 +9,7 @@ Teleport(to="body")
       .notification-toast(
         v-for="notification in notifications"
         :key="notification.id"
-        :class="[
-          `notification--${notification.type}`,
-          { 'notification--dismissible': notification.dismissible }
-        ]"
+        :class="getNotificationClasses(notification)"
         @click="handleToastClick(notification)"
       )
         .notification-content
@@ -26,7 +23,7 @@ Teleport(to="body")
           button.action-btn(
             v-for="action in notification.actions"
             :key="action.label"
-            :class="[`action-btn--${action.type || 'default'}`]"
+            :class="getActionClasses(action)"
             @click.stop="handleActionClick(notification, action)"
           ) {{ action.label }}
         
@@ -40,7 +37,7 @@ Teleport(to="body")
         .notification-progress(
           v-if="notification.duration && notification.duration > 0"
           :class="{ 'notification-progress--paused': notification.paused }"
-          :style="{ animationDuration: `${notification.duration}ms` }"
+          :style="getProgressStyle(notification)"
         )
 </template>
 
@@ -61,6 +58,24 @@ const getIconName = (type: string): string => {
     loading: 'ph:spinner'
   }
   return iconMap[type] || iconMap.info
+}
+
+// 通知のCSSクラスを取得
+const getNotificationClasses = (notification: any) => {
+  return [
+    `notification--${notification.type}`,
+    { 'notification--dismissible': notification.dismissible }
+  ]
+}
+
+// アクションボタンのCSSクラスを取得
+const getActionClasses = (action: any) => {
+  return [`action-btn--${action.type || 'default'}`]
+}
+
+// プログレスバーのスタイルを取得
+const getProgressStyle = (notification: any) => {
+  return { animationDuration: `${notification.duration}ms` }
 }
 
 // トースト全体のクリック処理
