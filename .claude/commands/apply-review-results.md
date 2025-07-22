@@ -1,25 +1,25 @@
-Apply code review feedback from `/reviews` directory with task context awareness.
+タスク文脈認識機能付きで `/reviews` ディレクトリからコードレビューフィードバックを適用します。
 
-Arguments: [task-number] (optional) - Filter reviews for specific task (e.g., 2.1)
+引数: [task-number] (オプション) - 特定タスクのレビューをフィルタ (例: 2.1)
 
-**Configuration and Environment Variables:**
+**設定・環境変数:**
 - `KIRO_SPECS_DIR`: Custom specification directory (default: `.kiro/specs/multi-project-dashboard`)
 - `REVIEWS_DIR`: Custom reviews directory (default: `/reviews`)
 
-Steps:
-1. Scan `${REVIEWS_DIR}` for feedback files (.md, .txt, .json)
-2. Filter by task number if specified, or show all recent reviews
-3. Load task context from specifications for validation
-4. Parse and categorize feedback (bugs, improvements, style, architecture, etc.)
-5. Present implementation plan with estimated scope and task requirement alignment
-6. Implement changes incrementally with explanations
-7. Validate changes against original task requirements
-8. Run tests after each significant change
-9. Perform final validation (tests, linting, type checking)
-10. Generate descriptive commit message with task references
-11. Confirm changes before committing
+ステップ:
+1. `${REVIEWS_DIR}` でフィードバックファイル (.md, .txt, .json) をスキャン
+2. 指定されている場合はタスク番号でフィルタ、または最近のレビューをすべて表示
+3. 検証のため仕様書からタスク文脈を読み込み
+4. フィードバックを解析・分類 (バグ、改善、スタイル、アーキテクチャなど)
+5. 推定スコープとタスク要件整合性を含む実装計画を提示
+6. 説明付きで段階的に変更を実装
+7. 元のタスク要件に対して変更を検証
+8. 重要な変更の度にテストを実行
+9. 最終検証を実行 (テスト、リンティング、型チェック)
+10. タスク参照付きの説明的コミットメッセージを生成
+11. コミット前に変更を確認
 
-Additional requirements:
+追加要件:
 - Handle missing `${REVIEWS_DIR}` directory gracefully
 - Support multiple feedback file formats (.md, .txt, .json)
 - Recognize task-specific review files (review-task-X.Y-*.md)
@@ -31,7 +31,7 @@ Additional requirements:
 - Update task completion status if all review items are addressed
 - Generate summary of applied changes for task documentation
 
-**Task Integration Features:**
+**タスク統合機能:**
 - Automatically load task specifications to understand context
 - Validate review suggestions against task requirements
 - Check if applied changes fulfill task acceptance criteria
@@ -39,7 +39,7 @@ Additional requirements:
 - Suggest related tasks that might be affected by changes
 - Generate task-aware commit messages (e.g., "Task 2.1: Apply review feedback - Fix error handling")
 
-**Review File Patterns:**
+**レビューファイルパターン:**
 - `review-task-{number}-{timestamp}.md` (task-specific reviews)
 - `review-general-{timestamp}.md` (general code reviews)
 - Support for both patterns with intelligent task correlation
