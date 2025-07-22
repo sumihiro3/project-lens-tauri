@@ -3,13 +3,14 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: {
-    enabled: true,
+    enabled: false,
   },
   ssr: false,
   srcDir: 'src/',
 
   devServer: {
-    port: 8765
+    port: 8765,
+    host: '127.0.0.1'
   },
 
   /**
@@ -103,6 +104,16 @@ export default defineNuxtConfig({
     // SSR設定
     ssr: {
       noExternal: ['vuetify']       // VuetifyをSSRで外部化しない
+    },
+    // 開発サーバー設定（プロセス管理の改善）
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 300
+      },
+      hmr: {
+        overlay: false
+      }
     }
   },
 
