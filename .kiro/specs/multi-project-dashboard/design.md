@@ -259,15 +259,94 @@ pub struct BacklogWorkspaceConfig {
 
 6. **エラー処理フロー**
    ```
-   Docker Check Failed → Error Dialog → Installation Guide → Retry Option
+   Docker Check Failed → Error Notification → Blocking Dialog → Installation Guide → Retry → Resolution
    ```
 
-## エラーハンドリング
+## エラーハンドリング設計
+
+### エラー階層と対応方針
+
+```mermaid
+graph TD
+    A[エラー発生] --> B{エラー種別判定}
+    B -->|Info/Warning| C[トースト通知]
+    B -->|Error| D[エラートースト]
+    B -->|Critical| E[ブロッキングダイアログ]
+    
+    C --> F[自動消失]
+    D --> G[手動消去可能]
+    E --> H[強制対応要求]
+    
+    H --> I[解決アクション]
+    I --> J{解決確認}
+    J -->|成功| K[ダイアログ閉じる]
+    J -->|失敗| E
+```
+
+### 必須サービス依存管理
+
+#### Docker依存管理
+```typescript
+interface ServiceDependency {
+  name: string
+  required: boolean
+  status: 'available' | 'unavailable' | 'checking'
+  blockingLevel: 'none' | 'warning' | 'blocking'
+}
+
+const dockerDependency: ServiceDependency = {
+  name: 'Docker',
+  required: true,
+  status: 'checking',
+  blockingLevel: 'blocking'
+}
+```
+
+#### ブロッキングダイアログ設計
+- **必須条件**: Docker未起動時は全機能を制限
+- **UI制約**: 背景クリック・ESCキー・クローズボタン無効化
+- **解決手順**: 段階的ガイダンス（診断→説明→ガイド→検証）
+- **OS別対応**: Windows/macOS/Linux別のインストール手順
+
+### 通知システム設計
+
+#### 通知重複防止機構
+```typescript
+interface NotificationControl {
+  isRetryMode: boolean      // 再試行モード中
+  activeDialogs: Set<string> // アクティブダイアログID
+  
+  // 重複防止ロジック
+  shouldShowNotification(type: string, context: string): boolean {
+    if (this.isRetryMode && type === 'docker-error') return false
+    if (this.activeDialogs.has(context)) return false
+    return true
+  }
+}
+```
+
+#### Store間通信パターン
+```typescript
+// カスタムイベントによる疎結合通信
+class StoreEventBus {
+  static notifyDockerDialog(errorType: string, message?: string) {
+    window.dispatchEvent(new CustomEvent('show-docker-error-dialog', {
+      detail: { errorType, message }
+    }))
+  }
+  
+  static setupDockerDialogListener(handler: (detail: any) => void) {
+    const listener = (event: CustomEvent) => handler(event.detail)
+    window.addEventListener('show-docker-error-dialog', listener)
+    return () => window.removeEventListener('show-docker-error-dialog', listener)
+  }
+}
+```
 
 ### エラー分類と対応
 
 #### 接続エラー
-- **Docker環境未検出**: アプリ起動時のDocker可用性チェック、インストールガイド表示
+- **Docker環境未検出**: ブロッキングダイアログ、OS別インストールガイド表示
 - **MCP Server接続失敗**: 再接続オプション提供、キャッシュデータ表示
 - **AI API接続失敗**: フォールバック処理、基本的な優先度判定
 - **ネットワーク切断**: オフラインモード切り替え、キャッシュ利用
