@@ -19,17 +19,17 @@ BacklogのMCP Serverを活用した複数プロジェクトのチケット整理
 └── tasks.md                    # 実装タスクリスト（進捗管理）
 ```
 
-### 💻 開発・実装（docs/ - 新規追加）
+### 💻 開発・実装（docs/ - 現在整備中）
 ```
 docs/
-├── README.md                   # ドキュメント構造ガイド
+├── README.md                   # ドキュメント構造ガイド（未作成）
 ├── development/
-│   ├── implementation-guide.md  # 実装パターン・コーディング規約
-│   ├── best-practices.md       # ベストプラクティス集
-│   └── coding-standards.md     # コーディング標準
+│   └── implementation-guide.md  # 実装パターン・コーディング規約・ベストプラクティス
 ├── architecture/
-│   └── error-handling.md       # エラーハンドリング詳細設計
+│   └── system-overview.md      # システム概要・アーキテクチャ設計
 └── troubleshooting.md          # トラブルシューティング
+
+注意: エラーハンドリング詳細設計は `.kiro/specs/multi-project-dashboard/design.md` に記載
 ```
 
 ### 📝 実装記録（_docs/ - 既存）
@@ -277,10 +277,10 @@ NODE_OPTIONS="--max-old-space-size=4096" yarn dev
 1. **問題特定**: `docs/troubleshooting.md`
 2. **既知の問題**: `_docs/implement-tasks/` の修正記録
 3. **設計制約**: `.kiro/specs/` の制約事項確認
-4. **修正パターン**: `docs/development/best-practices.md`
+4. **修正パターン**: `docs/development/implementation-guide.md`（実装パターン・エラーハンドリング）
 
 ### エラーハンドリング実装時
-1. **設計方針**: `docs/architecture/error-handling.md`
+1. **設計方針**: `.kiro/specs/multi-project-dashboard/design.md`（エラーハンドリング設計）
 2. **実装パターン**: 上記クイックリファレンス
 3. **参考実装**: `src/stores/dockerStore.ts`, `src/components/settings/DockerErrorDialog.vue`
 
@@ -456,4 +456,4 @@ pub enum ExampleEnum {
 
 **このガイドは実装経験に基づいて継続的に更新されます。新しい知見や制約は随時追加してください。**
 
-**最終更新**: 2025年7月23日 - 日本語コメント規約を追加、Docker依存管理、エラーハンドリング、macOS開発環境対応
+**最終更新**: 2025年7月24日 - ドキュメント参照リンクを実際のファイル構造に合わせて修正
