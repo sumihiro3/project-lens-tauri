@@ -10,8 +10,6 @@ div
     :visible="dockerStore.showErrorDialog"
     :errorType="dockerStore.errorDialogType"
     :errorMessage="dockerStore.error"
-    @close="dockerStore.closeErrorDialog"
-    @retry="dockerStore.retryDockerEnvironment"
   )
 </template>
 

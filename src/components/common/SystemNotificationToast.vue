@@ -105,7 +105,7 @@ const dismiss = (id: string) => {
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     // Escapeキーで最新の通知を閉じる
-    const latestNotification = notifications.value[0]
+    const latestNotification = notifications[0]
     if (latestNotification?.dismissible) {
       dismiss(latestNotification.id)
     }
