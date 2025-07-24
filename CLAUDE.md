@@ -52,6 +52,25 @@ _docs/
 - **必須ダイアログ**: 背景クリック・ESCキー・クローズボタン全て無効化
 
 ### macOS開発環境の特別設定
+
+#### 設定が必要な理由と背景
+
+macOSでのTauri + Nuxt3開発環境では、以下の特有の問題が発生するため特別な設定が必要です：
+
+1. **子プロセス管理の問題**
+   - macOSのセキュリティ機能により、DevToolsが子プロセスを適切に管理できずにSIGTERMエラーが発生
+   - Tauri + Nuxtの組み合わせで開発サーバー起動時に競合が発生
+
+2. **ファイル監視システムの制限**
+   - macOSのfseventsがNuxt3のHMR（Hot Module Replacement）と競合
+   - inotifyベースの監視がmacOSで不安定になることがある
+
+3. **ネットワーク設定の問題**
+   - localhostとTauriアプリ間の通信でCORSエラーが発生しやすい
+   - ホスト名解決の問題でアプリが起動しない場合がある
+
+#### 実装される設定とその効果
+
 ```typescript
 // nuxt.config.ts - macOS固有設定
 const isDarwin = process.platform === 'darwin'
@@ -72,6 +91,31 @@ export default defineNuxtConfig({
     port: 8765
   }
 })
+```
+
+**各設定の詳細な効果：**
+
+- `devtools: { enabled: !isDarwin }`: DevToolsを無効化してSIGTERMエラーを防止
+- `usePolling: isDarwin`: fseventsの代わりにポーリングベースの監視を使用
+- `interval: 300`: ポーリング間隔を300msに設定（パフォーマンスと安定性のバランス）
+- `hmr: { overlay: false }`: HMRエラーオーバーレイを無効化して画面表示の競合を防止
+- `host: '127.0.0.1'`: IPアドレス直接指定でTauriとの通信を安定化
+
+#### 発生する問題の例
+
+これらの設定を行わない場合に発生する典型的なエラー：
+
+```bash
+# DevTools関連
+Error: spawn EBADF
+Error: SIGTERM received
+
+# ファイル監視関連
+Error: ENOSPC: System limit for number of file watchers reached
+[vite] file change detected but HMR failed
+
+# ネットワーク関連
+Access to fetch at 'http://localhost:8765' from origin 'tauri://localhost' has been blocked by CORS policy
 ```
 
 ### エラーハンドリング設計原則
