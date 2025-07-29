@@ -8,9 +8,13 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "tauri": "cd src-tauri && tauri",
     "tauri:dev": "cd src-tauri && tauri dev || cd ..",
-    "tauri:build": "cd src-tauri && tauri build || cd .."
+    "tauri:build": "cd src-tauri && tauri build || cd ..",
+    "tauri:test": "cd src-tauri && cargo test"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
