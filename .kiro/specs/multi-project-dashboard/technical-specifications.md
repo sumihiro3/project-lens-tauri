@@ -273,6 +273,7 @@ CREATE TABLE IF NOT EXISTS workspaces (
     name TEXT NOT NULL,
     domain TEXT NOT NULL,
     api_key_encrypted TEXT NOT NULL,
+    encryption_version TEXT NOT NULL DEFAULT 'v1',  -- 🔥 Task 3.2で追加
     enabled BOOLEAN NOT NULL DEFAULT true,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL

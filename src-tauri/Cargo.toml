@@ -39,3 +39,7 @@ chrono = { version = "0.4.34", features = ["serde"] }
 # 非同期トレイト
 async-trait = "0.1.77"
 
+[dev-dependencies]
+# テスト用の一時ファイル作成
+tempfile = "3.8.1"
+

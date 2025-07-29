@@ -363,9 +363,11 @@ impl UrgencyFactors {
    Workspace Settings → Connection Test → MCP Server Update → Ticket Refresh → Cache Update
    ```
 
-6. **エラー処理フロー**
+6. **エラー処理フロー（🟢 Task 3.2で標準化実装完了）**
    ```
-   Docker Check Failed → Error Notification → Blocking Dialog → Installation Guide → Retry → Resolution
+   Service Error → useErrorHandling → Error Level判定 → 
+   [Info: Toast 4秒] | [Warning: Banner 手動削除] | [Error: Toast 8秒] | [Critical: 永続Toast + Blocking Dialog] → 
+   重複防止チェック → 通知表示 → 解決アクション → 成功/失敗処理
    ```
 
 ## エラーハンドリング設計
