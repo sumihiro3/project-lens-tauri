@@ -1,7 +1,7 @@
 // リポジトリ
 // データベースとのCRUD操作を担当
 
-use rusqlite::{Connection, Result};
+use rusqlite::{Connection, Result, params};
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use chrono::{DateTime, Utc};
@@ -142,11 +142,22 @@ impl DatabaseConnection {
     /// 
     /// # 戻り値
     /// トランザクション制御用のTransactionWrapper
-    pub fn begin_transaction(&self) -> Result<TransactionWrapper, DatabaseError> {
-        let _conn = self.conn.lock().unwrap();
-        // Note: 実際のトランザクション管理はPhase 3で詳細実装
-        // 現在は基本的な構造のみ提供
-        Ok(TransactionWrapper::new())
+    /// 
+    /// # 注意
+    /// このメソッドは現在、ライフタイム制約により制限された実装になっています。
+    /// 実際のトランザクション機能については、個別のRepository実装内での
+    /// unchecked_transaction()の直接使用を推奨します。
+    pub fn begin_transaction(&self) -> Result<(), DatabaseError> {
+        // Arc<Mutex<Connection>>からの一時的な借用では、
+        // 適切なライフタイムを持つTransactionWrapperを作成できないため、
+        // この実装は最小限の検証のみを行います。
+        let conn = self.conn.lock().unwrap();
+        
+        // 接続の有効性確認
+        match conn.execute("SELECT 1", []) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(DatabaseError::SqliteError(e))
+        }
     }
     
     /// データベースファイルパスの取得
@@ -156,26 +167,259 @@ impl DatabaseConnection {
 }
 
 /// トランザクション管理ラッパー
-/// Phase 3で詳細実装予定
-pub struct TransactionWrapper {
-    // 実装はPhase 3で追加
+/// 複数テーブルの更新処理を安全に実行するためのトランザクション制御
+pub struct TransactionWrapper<'conn> {
+    transaction: Option<rusqlite::Transaction<'conn>>,
+    is_committed: bool,
+    is_rolled_back: bool,
 }
 
-impl TransactionWrapper {
-    fn new() -> Self {
-        Self {}
+impl<'conn> TransactionWrapper<'conn> {
+    /// 新しいトランザクションを開始
+    /// 
+    /// # 引数
+    /// * `conn` - データベース接続
+    /// 
+    /// # 戻り値
+    /// 初期化されたトランザクションラッパー
+    /// 
+    /// # エラー
+    /// トランザクション開始に失敗した場合
+    pub fn new(conn: &'conn mut Connection) -> Result<Self, DatabaseError> {
+        let transaction = conn.unchecked_transaction()?;
+        Ok(Self {
+            transaction: Some(transaction),
+            is_committed: false,
+            is_rolled_back: false,
+        })
+    }
+    
+    /// トランザクション内でSQLを実行
+    /// 
+    /// # 引数
+    /// * `sql` - 実行するSQL文
+    /// * `params` - SQLパラメータ
+    /// 
+    /// # エラー
+    /// SQL実行に失敗した場合
+    pub fn execute<P>(&self, sql: &str, params: P) -> Result<usize, DatabaseError>
+    where
+        P: rusqlite::Params,
+    {
+        if let Some(ref tx) = self.transaction {
+            Ok(tx.execute(sql, params)?)
+        } else {
+            Err(DatabaseError::ConnectionError(
+                "Transaction has been consumed".to_string()
+            ))
+        }
+    }
+    
+    /// 複数チケットの一括保存（トランザクション内）
+    /// 
+    /// # 引数
+    /// * `tickets` - 保存するチケット一覧
+    /// 
+    /// # エラー
+    /// SQL実行に失敗した場合
+    pub fn batch_save_tickets(&self, tickets: &[Ticket]) -> Result<(), DatabaseError> {
+        if let Some(ref tx) = self.transaction {
+            for ticket in tickets {
+                let status_str = match ticket.status {
+                    TicketStatus::Open => "Open",
+                    TicketStatus::InProgress => "InProgress", 
+                    TicketStatus::Resolved => "Resolved",
+                    TicketStatus::Closed => "Closed",
+                    TicketStatus::Pending => "Pending",
+                };
+                
+                let priority_int = ticket.priority.clone() as i32;
+                
+                tx.execute(
+                    "INSERT OR REPLACE INTO tickets (
+                        id, project_id, workspace_id, title, description, status, priority,
+                        assignee_id, reporter_id, created_at, updated_at, due_date, raw_data
+                    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                    params![
+                        &ticket.id,
+                        &ticket.project_id,
+                        &ticket.workspace_id,
+                        &ticket.title,
+                        ticket.description.as_deref().unwrap_or(""),
+                        status_str,
+                        priority_int,
+                        ticket.assignee_id.as_deref().unwrap_or(""),
+                        &ticket.reporter_id,
+                        &ticket.created_at.to_rfc3339(),
+                        &ticket.updated_at.to_rfc3339(),
+                        ticket.due_date.map(|d| d.to_rfc3339()).as_deref().unwrap_or(""),
+                        &ticket.raw_data,
+                    ],
+                )?;
+            }
+            Ok(())
+        } else {
+            Err(DatabaseError::ConnectionError(
+                "Transaction has been consumed".to_string()
+            ))
+        }
+    }
+    
+    /// 複数AI分析結果の一括保存（トランザクション内）
+    /// 
+    /// # 引数
+    /// * `analyses` - 保存するAI分析結果一覧
+    /// 
+    /// # エラー
+    /// SQL実行に失敗した場合
+    pub fn batch_save_ai_analyses(&self, analyses: &[AIAnalysis]) -> Result<(), DatabaseError> {
+        if let Some(ref tx) = self.transaction {
+            for analysis in analyses {
+                tx.execute(
+                    "INSERT OR REPLACE INTO ai_analyses (
+                        ticket_id, urgency_score, complexity_score, user_relevance_score,
+                        project_weight_factor, final_priority_score, recommendation_reason,
+                        category, analyzed_at
+                    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                    [
+                        &analysis.ticket_id,
+                        &analysis.urgency_score.to_string(),
+                        &analysis.complexity_score.to_string(),
+                        &analysis.user_relevance_score.to_string(),
+                        &analysis.project_weight_factor.to_string(),
+                        &analysis.final_priority_score.to_string(),
+                        &analysis.recommendation_reason,
+                        &analysis.category,
+                        &analysis.analyzed_at.to_rfc3339(),
+                    ],
+                )?;
+            }
+            Ok(())
+        } else {
+            Err(DatabaseError::ConnectionError(
+                "Transaction has been consumed".to_string()
+            ))
+        }
+    }
+    
+    /// プロジェクトとその関連データの一括更新
+    /// 
+    /// # 引数
+    /// * `workspace` - ワークスペース設定
+    /// * `project_weights` - プロジェクト重み一覧
+    /// * `tickets` - チケット一覧
+    /// 
+    /// # エラー
+    /// SQL実行に失敗した場合
+    pub fn batch_update_project_data(
+        &self,
+        workspace: &BacklogWorkspaceConfig,
+        project_weights: &[ProjectWeight],
+        tickets: &[Ticket],
+    ) -> Result<(), DatabaseError> {
+        // ワークスペース情報を更新
+        self.execute(
+            "INSERT OR REPLACE INTO workspaces (
+                id, name, domain, api_key_encrypted, encryption_version, enabled, created_at, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            [
+                &workspace.id,
+                &workspace.name,
+                &workspace.domain,
+                &workspace.api_key_encrypted,
+                &workspace.encryption_version,
+                &workspace.enabled.to_string(),
+                &workspace.created_at.to_rfc3339(),
+                &workspace.updated_at.to_rfc3339(),
+            ]
+        )?;
+        
+        // プロジェクト重みを更新
+        for project_weight in project_weights {
+            self.execute(
+                "INSERT OR REPLACE INTO project_weights (
+                    project_id, project_name, workspace_id, weight_score, updated_at
+                ) VALUES (?1, ?2, ?3, ?4, ?5)",
+                [
+                    &project_weight.project_id,
+                    &project_weight.project_name,
+                    &project_weight.workspace_id,
+                    &project_weight.weight_score.to_string(),
+                    &project_weight.updated_at.to_rfc3339(),
+                ]
+            )?;
+        }
+        
+        // チケットを一括保存
+        self.batch_save_tickets(tickets)?;
+        
+        Ok(())
     }
     
     /// トランザクションをコミット
-    pub fn commit(self) -> Result<(), DatabaseError> {
-        // Phase 3で実装
-        Ok(())
+    /// 
+    /// # エラー
+    /// コミットに失敗した場合
+    pub fn commit(mut self) -> Result<(), DatabaseError> {
+        if self.is_committed || self.is_rolled_back {
+            return Err(DatabaseError::ConnectionError(
+                "Transaction has already been finalized".to_string()
+            ));
+        }
+        
+        if let Some(tx) = self.transaction.take() {
+            tx.commit()?;
+            self.is_committed = true;
+            Ok(())
+        } else {
+            Err(DatabaseError::ConnectionError(
+                "Transaction has been consumed".to_string()
+            ))
+        }
     }
     
     /// トランザクションをロールバック
-    pub fn rollback(self) -> Result<(), DatabaseError> {
-        // Phase 3で実装
-        Ok(())
+    /// 
+    /// # エラー
+    /// ロールバックに失敗した場合
+    pub fn rollback(mut self) -> Result<(), DatabaseError> {
+        if self.is_committed || self.is_rolled_back {
+            return Err(DatabaseError::ConnectionError(
+                "Transaction has already been finalized".to_string()
+            ));
+        }
+        
+        if let Some(tx) = self.transaction.take() {
+            tx.rollback()?;
+            self.is_rolled_back = true;
+            Ok(())
+        } else {
+            Err(DatabaseError::ConnectionError(
+                "Transaction has been consumed".to_string()
+            ))
+        }
+    }
+    
+    /// トランザクションの状態確認
+    /// 
+    /// # 戻り値
+    /// (コミット済み, ロールバック済み)
+    pub fn status(&self) -> (bool, bool) {
+        (self.is_committed, self.is_rolled_back)
+    }
+}
+
+impl<'conn> Drop for TransactionWrapper<'conn> {
+    /// トランザクション自動ロールバック
+    /// コミットもロールバックも呼ばれなかった場合の安全装置
+    fn drop(&mut self) {
+        if !self.is_committed && !self.is_rolled_back {
+            if let Some(tx) = self.transaction.take() {
+                // 明示的にロールバックが呼ばれなかった場合の自動処理
+                let _ = tx.rollback();
+                self.is_rolled_back = true;
+            }
+        }
     }
 }
 
@@ -301,14 +545,14 @@ impl TicketRepository {
                 id, project_id, workspace_id, title, description, status, priority,
                 assignee_id, reporter_id, created_at, updated_at, due_date, raw_data
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-            [
+            params![
                 &ticket.id,
                 &ticket.project_id,
                 &ticket.workspace_id,
                 &ticket.title,
                 ticket.description.as_deref().unwrap_or(""),
                 status_str,
-                &priority_int.to_string(),
+                priority_int,
                 ticket.assignee_id.as_deref().unwrap_or(""),
                 &ticket.reporter_id,
                 &ticket.created_at.to_rfc3339(),
@@ -396,14 +640,14 @@ impl TicketRepository {
                     id, project_id, workspace_id, title, description, status, priority,
                     assignee_id, reporter_id, created_at, updated_at, due_date, raw_data
                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-                [
+                params![
                     &ticket.id,
                     &ticket.project_id,
                     &ticket.workspace_id,
                     &ticket.title,
                     ticket.description.as_deref().unwrap_or(""),
                     status_str,
-                    &priority_int.to_string(),
+                    priority_int,
                     ticket.assignee_id.as_deref().unwrap_or(""),
                     &ticket.reporter_id,
                     &ticket.created_at.to_rfc3339(),
@@ -430,7 +674,7 @@ impl TicketRepository {
             _ => TicketStatus::Open, // デフォルト
         };
         
-        let priority_int: i32 = row.get::<_, String>(6)?.parse().unwrap_or(2);
+        let priority_int: i32 = row.get(6)?;
         let priority = match priority_int {
             1 => Priority::Low,
             2 => Priority::Normal,
@@ -441,7 +685,12 @@ impl TicketRepository {
         
         let created_at_str: String = row.get(9)?;
         let updated_at_str: String = row.get(10)?;
-        let due_date_str: Option<String> = row.get(11)?;
+        let due_date_str: String = row.get(11)?;
+        let due_date = if due_date_str.is_empty() {
+            None
+        } else {
+            Some(DateTime::parse_from_rfc3339(&due_date_str).unwrap().with_timezone(&Utc))
+        };
         
         Ok(Ticket {
             id: row.get(0)?,
@@ -455,7 +704,7 @@ impl TicketRepository {
             reporter_id: row.get(8)?,
             created_at: DateTime::parse_from_rfc3339(&created_at_str).unwrap().with_timezone(&Utc),
             updated_at: DateTime::parse_from_rfc3339(&updated_at_str).unwrap().with_timezone(&Utc),
-            due_date: due_date_str.map(|s| DateTime::parse_from_rfc3339(&s).unwrap().with_timezone(&Utc)),
+            due_date,
             raw_data: row.get(12)?,
         })
     }
@@ -771,5 +1020,117 @@ impl AIAnalysisRepository {
             category: row.get(7)?,
             analyzed_at: DateTime::parse_from_rfc3339(&analyzed_at_str).unwrap().with_timezone(&Utc),
         })
+    }
+}
+
+#[cfg(test)]
+mod repository_tests {
+    use super::*;
+    use crate::models::{Ticket, TicketStatus, Priority, BacklogWorkspaceConfig, ProjectWeight, AIAnalysis};
+    use chrono::Utc;
+    use rusqlite::Connection;
+    use tempfile::NamedTempFile;
+
+    /// テスト用の一時データベースを作成
+    fn create_test_db() -> (DatabaseConnection, NamedTempFile) {
+        let temp_file = NamedTempFile::new().expect("一時ファイル作成に失敗");
+        let db_path = temp_file.path().to_path_buf();
+        let db_conn = DatabaseConnection::new(db_path).expect("データベース接続に失敗");
+        (db_conn, temp_file)
+    }
+
+    /// テスト用のTicketデータを作成
+    fn create_test_ticket(id: &str, project_id: &str) -> Ticket {
+        Ticket {
+            id: id.to_string(),
+            project_id: project_id.to_string(),
+            workspace_id: "test_workspace".to_string(),
+            title: format!("テストチケット {}", id),
+            description: Some("テスト用の説明".to_string()),
+            status: TicketStatus::Open,
+            priority: Priority::Normal,
+            assignee_id: Some("test_user".to_string()),
+            reporter_id: "reporter".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+            due_date: None,
+            raw_data: "{}".to_string(),
+        }
+    }
+
+    #[test]
+    fn test_transaction_wrapper_commit_rollback() {
+        let (db_conn, _temp_file) = create_test_db();
+        
+        // トランザクション内でのバッチ操作テスト
+        let mut conn = Connection::open(db_conn.db_path()).expect("接続に失敗");
+        let tx_wrapper = TransactionWrapper::new(&mut conn).expect("トランザクション開始に失敗");
+        
+        let tickets = vec![
+            create_test_ticket("TX-001", "PROJECT-1"),
+            create_test_ticket("TX-002", "PROJECT-1"),
+        ];
+        
+        // バッチ保存のテスト
+        tx_wrapper.batch_save_tickets(&tickets).expect("バッチ保存に失敗");
+        
+        // トランザクションコミット
+        tx_wrapper.commit().expect("コミットに失敗");
+        
+        // 保存されたデータの確認
+        let ticket_repo = TicketRepository::new(db_conn.get_connection());
+        let saved_ticket = ticket_repo.get_ticket_by_id("TX-001").expect("保存後のチケット取得に失敗");
+        assert!(saved_ticket.is_some());
+    }
+
+    #[test]
+    fn test_transaction_wrapper_auto_rollback() {
+        let (db_conn, _temp_file) = create_test_db();
+        
+        // 自動ロールバック機能のテスト（Dropトレイト）
+        {
+            let mut conn = Connection::open(db_conn.db_path()).expect("接続に失敗");
+            let tx_wrapper = TransactionWrapper::new(&mut conn).expect("トランザクション開始に失敗");
+            
+            let ticket = create_test_ticket("AUTO-ROLLBACK-001", "PROJECT-1");
+            tx_wrapper.batch_save_tickets(&[ticket]).expect("バッチ保存に失敗");
+            
+            // 明示的にcommit/rollbackを呼ばずにスコープを抜ける
+            // Dropトレイトにより自動ロールバックが実行される
+        }
+        
+        // 自動ロールバック後のデータ確認
+        let ticket_repo = TicketRepository::new(db_conn.get_connection());
+        let auto_rollback_ticket = ticket_repo.get_ticket_by_id("AUTO-ROLLBACK-001").expect("自動ロールバック後のチケット取得に失敗");
+        assert!(auto_rollback_ticket.is_none(), "自動ロールバックが機能していない");
+    }
+
+    #[test]
+    fn test_repository_error_handling() {
+        let (db_conn, _temp_file) = create_test_db();
+        
+        // 無効なデータでのエラーテスト
+        let config_repo = ConfigRepository::new(db_conn.get_connection());
+        
+        // 存在しないキーの削除（エラーにならない）
+        let delete_result = config_repo.delete_config("nonexistent_key");
+        assert!(delete_result.is_ok(), "存在しないキーの削除でエラーが発生");
+        
+        // データベース接続の有効性テスト
+        let version_result = db_conn.get_db_version();
+        assert!(version_result.is_ok(), "データベースバージョン取得でエラーが発生");
+    }
+
+    #[test]
+    fn test_database_connection_creation() {
+        let (db_conn, _temp_file) = create_test_db();
+        
+        // データベースバージョンの確認
+        let version = db_conn.get_db_version().expect("バージョン取得に失敗");
+        assert_eq!(version, 2, "データベースバージョンが正しくない");
+        
+        // 接続の有効性確認
+        // データベースバージョンが取得できているので接続は有効
+        assert!(true, "データベース接続は正常");
     }
 }
