@@ -37,7 +37,13 @@ docs/
 _docs/
 ├── implement-tasks/             # タスク実装ログ
 │   ├── 2.2-task-logs.md
+│   ├── 3.1-implementation-log.md    # Task 3.1実装記録
+│   ├── 3.2-implementation-log.md    # Task 3.2実装記録（設計統合・スキーマv2）
 │   └── dev-server-startup-errors-fix.md
+├── task-plans/                  # 実装計画書
+│   ├── 3.1-task-plan.md
+│   ├── 3.2-task-plan.md
+│   └── 4.1-task-plan.md         # Task 4.1実装計画（DB環境設定）
 └── blog/                       # 技術ブログ記事
 ```
 
@@ -293,6 +299,9 @@ NODE_OPTIONS="--max-old-space-size=4096" yarn dev
 - **エラーダイアログ**: `src/components/settings/DockerErrorDialog.vue`
 - **通知システム**: `src/stores/notificationStore.ts`
 - **アプリ統合**: `src/app.vue`
+- **データベース接続**: `src-tauri/src/storage/repository.rs` (Task 4.1実装)
+- **スキーマ定義**: `src-tauri/src/storage/schema.rs` (Task 3.2実装)
+- **データモデル**: `src-tauri/src/models/mod.rs` (Task 3.2統合)
 
 ### 設定ファイル
 - **Nuxt設定**: `nuxt.config.ts`（プラットフォーム別設定重要）
@@ -304,6 +313,12 @@ NODE_OPTIONS="--max-old-space-size=4096" yarn dev
 - [x] エラーハンドリングUI（ブロッキングダイアログ）
 - [x] 通知システム（重複防止機能付き）
 - [x] macOS開発環境対応
+- [x] **SQLiteスキーマv2実装** (Task 3.2完了)
+- [x] **データモデル統合** (Task 3.2完了)
+- [x] **マイグレーション機能** (Task 3.2完了)
+- [x] **データベース接続・CRUD操作** (Task 4.1完了)
+- [x] **Repository層実装** (Task 4.1完了)
+- [x] **トランザクション管理** (Task 4.1完了)
 
 ---
 
@@ -451,9 +466,10 @@ pub enum ExampleEnum {
    - プラットフォーム依存の処理：対象OSを明記
    - 非同期処理：タイムアウトやエラーハンドリングを説明
    - 外部API連携：レート制限やエラーレスポンスを記載
+   - データベース操作：SQLiteスキーマv2準拠、トランザクション使用を明記
 
 ---
 
 **このガイドは実装経験に基づいて継続的に更新されます。新しい知見や制約は随時追加してください。**
 
-**最終更新**: 2025年7月24日 - ドキュメント参照リンクを実際のファイル構造に合わせて修正
+**最終更新**: 2025年7月29日 - Task 4.1完了に伴うデータベース層実装状況を反映
