@@ -288,9 +288,14 @@ export const useNotificationStore = defineStore('notification', () => {
           {
             label: 'インストールガイド',
             type: 'primary',
+            dismissOnClick: true,
             handler: () => {
-              // Docker ErrorDialogを表示する処理をここに実装
-              console.log('Docker installation guide requested')
+              // globalThisを使ってDockerエラーダイアログ表示イベントを発行
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('show-docker-error-dialog', {
+                  detail: { errorType, message }
+                }))
+              }
             }
           },
           {

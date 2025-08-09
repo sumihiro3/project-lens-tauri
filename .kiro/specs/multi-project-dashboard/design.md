@@ -168,28 +168,31 @@ impl StorageService {
 
 ### コアエンティティ
 
-#### Ticket
+#### Ticket（🟢 Task 3.2で技術仕様書準拠に更新済み）
 ```rust
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Ticket {
     pub id: String,
     pub project_id: String,
+    pub workspace_id: String,         // 🔥 複数ワークスペース管理対応（NEW）
     pub title: String,
-    pub description: String,
+    pub description: Option<String>,  // Optional型に修正
     pub status: TicketStatus,
-    pub priority: Priority,
-    pub assignee: Option<User>,
-    pub reporter: User,
-    pub comments: Vec<Comment>,
-    pub mentions: Vec<User>,
-    pub watchers: Vec<User>,
+    pub priority: Priority,           // 数値型対応（Low=1, Normal=2, High=3, Critical=4）
+    pub assignee_id: Option<String>,  // User型からString型に変更（正規化）
+    pub reporter_id: String,          // User型からString型に変更（正規化）
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub due_date: Option<DateTime<Utc>>,
+    pub raw_data: String,             // 🔥 JSON形式オリジナルデータ保存（NEW）
+    // 正規化により分離：
+    // - comments: 別テーブル管理
+    // - mentions: 別テーブル管理  
+    // - watchers: 別テーブル管理
 }
 ```
 
-#### AIAnalysis
+#### AIAnalysis（🟢 Task 3.2で完全実装済み・技術仕様書準拠）
 ```rust
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AIAnalysis {
@@ -198,25 +201,54 @@ pub struct AIAnalysis {
     pub complexity_score: f32,
     pub user_relevance_score: f32,
     pub project_weight_factor: f32,
-    pub final_priority_score: f32,
+    pub final_priority_score: f32,    // 自動計算済み
     pub recommendation_reason: String,
-    pub category: TaskCategory,
+    pub category: String,             // TaskCategory型からString型に変更
+    pub analyzed_at: DateTime<Utc>,   // 🔥 分析日時追加（NEW）
+}
+
+impl AIAnalysis {
+    /// 🟢 実装済み：技術仕様書準拠の優先度計算アルゴリズム
+    fn calculate_final_score(
+        urgency: f32,
+        complexity: f32, 
+        user_relevance: f32,
+        project_weight: f32,
+    ) -> f32 {
+        // 基本スコア（緊急度40%、複雑度30%、ユーザー関連度30%）
+        let base_score = (urgency * 0.4) + (complexity * 0.3) + (user_relevance * 0.3);
+        // プロジェクト重みを適用（1-10スケールを0.2-2.0に正規化）
+        let weight_multiplier = project_weight / 5.0;
+        // 0-100の範囲にクランプ
+        (base_score * weight_multiplier).max(0.0).min(100.0)
+    }
 }
 ```
 
-#### ProjectWeight
+#### ProjectWeight（🟢 Task 3.2で技術仕様書準拠に更新済み）
 ```rust
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProjectWeight {
     pub project_id: String,
     pub project_name: String,
-    pub workspace_name: String,
-    pub weight_score: u8, // 1-10
+    pub workspace_id: String,        // workspace_name → workspace_id に変更（正規化）
+    pub weight_score: u8,            // 1-10（範囲チェック付き）
     pub updated_at: DateTime<Utc>,
+}
+
+impl ProjectWeight {
+    /// 🟢 実装済み：重みスコアの検証（1-10の範囲チェック）
+    pub fn validate_weight_score(score: u8) -> Result<u8, String> {
+        if score >= 1 && score <= 10 {
+            Ok(score)
+        } else {
+            Err(format!("重みスコアは1-10の範囲で指定してください: {}", score))
+        }
+    }
 }
 ```
 
-#### BacklogWorkspaceConfig
+#### BacklogWorkspaceConfig（🟢 Task 3.2で技術仕様書準拠に更新済み）
 ```rust
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BacklogWorkspaceConfig {
@@ -224,9 +256,83 @@ pub struct BacklogWorkspaceConfig {
     pub name: String,
     pub domain: String,
     pub api_key_encrypted: String,
+    pub encryption_version: String,   // 🔥 暗号化バージョン管理対応（NEW）
     pub enabled: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+impl BacklogWorkspaceConfig {
+    /// 🟢 実装済み：新しいワークスペース設定作成
+    pub fn new(
+        id: String,
+        name: String,
+        domain: String,
+        api_key_encrypted: String,
+        encryption_version: String,
+    ) -> Self {
+        let now = Utc::now();
+        Self {
+            id, name, domain, api_key_encrypted, encryption_version,
+            enabled: true,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+}
+```
+
+#### UrgencyFactors（🟢 Task 3.2で新規実装・技術仕様書準拠）
+```rust
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UrgencyFactors {
+    pub due_date: Option<DateTime<Utc>>,
+    pub recent_comments: i32,
+    pub mentions_count: i32,
+    pub last_update_days: i32,
+    pub is_assigned_to_user: bool,
+    pub is_blocking_other_tickets: bool,
+}
+
+impl UrgencyFactors {
+    /// 🟢 実装済み：緊急度乗数の計算（技術仕様書アルゴリズム準拠）
+    pub fn calculate_urgency_multiplier(&self) -> f32 {
+        let mut multiplier = 1.0;
+        
+        // 期限による緊急度
+        if let Some(due_date) = self.due_date {
+            let days_until_due = (due_date - Utc::now()).num_days();
+            multiplier *= match days_until_due {
+                ..=0 => 2.0,      // 期限切れ
+                1..=1 => 1.8,     // 1日以内
+                2..=3 => 1.5,     // 2-3日以内
+                4..=7 => 1.2,     // 1週間以内
+                _ => 1.0,         // それ以上
+            };
+        }
+        
+        // コメント活動による緊急度
+        if self.recent_comments > 3 {
+            multiplier *= 1.3;
+        }
+        
+        // メンション数による緊急度
+        if self.mentions_count > 1 {
+            multiplier *= 1.2;
+        }
+        
+        // 担当者チケットは優先度アップ
+        if self.is_assigned_to_user {
+            multiplier *= 1.1;
+        }
+        
+        // ブロッカーチケットは最優先
+        if self.is_blocking_other_tickets {
+            multiplier *= 1.5;
+        }
+        
+        multiplier
+    }
 }
 ```
 
@@ -257,17 +363,131 @@ pub struct BacklogWorkspaceConfig {
    Workspace Settings → Connection Test → MCP Server Update → Ticket Refresh → Cache Update
    ```
 
-6. **エラー処理フロー**
+6. **エラー処理フロー（🟢 Task 3.2で標準化実装完了）**
    ```
-   Docker Check Failed → Error Dialog → Installation Guide → Retry Option
+   Service Error → useErrorHandling → Error Level判定 → 
+   [Info: Toast 4秒] | [Warning: Banner 手動削除] | [Error: Toast 8秒] | [Critical: 永続Toast + Blocking Dialog] → 
+   重複防止チェック → 通知表示 → 解決アクション → 成功/失敗処理
    ```
 
-## エラーハンドリング
+## エラーハンドリング設計
+
+### エラー階層と対応方針（🟢 Task 3.2で標準化実装完了）
+
+```mermaid
+graph TD
+    A[エラー発生] --> B{useErrorHandling}
+    B --> C{エラーレベル判定}
+    C -->|Info| D[Toast通知 4秒自動削除]
+    C -->|Warning| E[Banner通知 手動削除・詳細ボタン]
+    C -->|Error| F[Toast通知 8秒表示・手動削除可]
+    C -->|Critical| G[永続Toast + ブロッキングダイアログ]
+    
+    D --> H[自動消失]
+    E --> I[手動消去]
+    F --> J[手動消去可能]
+    G --> K[強制対応要求・ESC無効・背景クリック無効]
+    
+    K --> L[解決アクション実行]
+    L --> M{解決確認}
+    M -->|成功| N[ダイアログ閉じる・成功通知]
+    M -->|失敗| O[エラー通知・再試行可能]
+    
+    subgraph "🟢 重複防止機構実装済み"
+        P[isRetryMode制御]
+        Q[activeNotifications Map管理]
+        R[カスタムイベント通信]
+    end
+```
+
+### 必須サービス依存管理
+
+#### Docker依存管理
+```typescript
+interface ServiceDependency {
+  name: string
+  required: boolean
+  status: 'available' | 'unavailable' | 'checking'
+  blockingLevel: 'none' | 'warning' | 'blocking'
+}
+
+const dockerDependency: ServiceDependency = {
+  name: 'Docker',
+  required: true,
+  status: 'checking',
+  blockingLevel: 'blocking'
+}
+```
+
+#### ブロッキングダイアログ設計
+- **必須条件**: Docker未起動時は全機能を制限
+- **UI制約**: 背景クリック・ESCキー・クローズボタン無効化
+- **解決手順**: 段階的ガイダンス（診断→説明→ガイド→検証）
+- **OS別対応**: Windows/macOS/Linux別のインストール手順
+
+### 通知システム設計
+
+#### 通知重複防止機構（🟢 Task 3.2で標準化実装完了）
+```typescript
+// 🟢 実装済み：src/composables/useErrorHandling.ts
+interface NotificationDeduplication {
+  activeNotifications: Map<string, string>  // context → notificationId
+  isRetryMode: boolean                     // 再試行モード中の制御
+  
+  // 🟢 実装済み：重複防止ロジック
+  shouldShowNotification(type: ErrorType, context: string): boolean {
+    const key = `${type}:${context}`
+    
+    // 再試行モード中は重複通知を抑制
+    if (this.isRetryMode && type.includes('retry' as any)) {
+      return false
+    }
+    
+    // 既存通知が存在する場合は抑制
+    if (this.activeNotifications.has(key)) {
+      return false
+    }
+    
+    return true
+  }
+}
+
+// 🟢 実装済み：標準化エラーハンドリング
+export function useErrorHandling(options: ErrorHandlingOptions) {
+  return {
+    handleError,           // エラー処理実行
+    handleCriticalError,   // クリティカルエラー処理
+    handleWarning,         // 警告処理
+    handleInfo,           // 情報処理
+    setRetryMode,         // 再試行モード制御
+    closeErrorDialog,     // ダイアログ閉じる
+    clearNotification,    // 通知削除
+  }
+}
+```
+
+#### Store間通信パターン
+```typescript
+// カスタムイベントによる疎結合通信
+class StoreEventBus {
+  static notifyDockerDialog(errorType: string, message?: string) {
+    window.dispatchEvent(new CustomEvent('show-docker-error-dialog', {
+      detail: { errorType, message }
+    }))
+  }
+  
+  static setupDockerDialogListener(handler: (detail: any) => void) {
+    const listener = (event: CustomEvent) => handler(event.detail)
+    window.addEventListener('show-docker-error-dialog', listener)
+    return () => window.removeEventListener('show-docker-error-dialog', listener)
+  }
+}
+```
 
 ### エラー分類と対応
 
 #### 接続エラー
-- **Docker環境未検出**: アプリ起動時のDocker可用性チェック、インストールガイド表示
+- **Docker環境未検出**: ブロッキングダイアログ、OS別インストールガイド表示
 - **MCP Server接続失敗**: 再接続オプション提供、キャッシュデータ表示
 - **AI API接続失敗**: フォールバック処理、基本的な優先度判定
 - **ネットワーク切断**: オフラインモード切り替え、キャッシュ利用

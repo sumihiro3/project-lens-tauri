@@ -1,52 +1,52 @@
-Review local changes based on task specifications and requirements.
+タスク仕様と要件に基づいてローカル変更をレビューします。
 
-Arguments: <task-number> (required) - e.g., 2.1, 3.2, etc.
+引数: <task-number> (必須) - 例: 2.1, 3.2, など
 
-**Configuration and Environment Variables:**
+**設定・環境変数:**
 - `KIRO_SPECS_DIR`: Custom specification directory (default: `.kiro/specs/multi-project-dashboard`)
 - `KIRO_STEERING_DIR`: Custom steering directory (default: `.kiro/steering`)
 - `TASKS_FILE`: Custom tasks file name (default: `tasks.md`)
 
-Workflow:
-1. Verify prerequisites (git repo, task specifications access)
-2. Load task specifications from `${KIRO_SPECS_DIR}/${TASKS_FILE}`
-3. Extract specific task ($1) details and requirements
-4. Load related context from:
+ワークフロー:
+1. 前提条件の確認 (gitリポジトリ、タスク仕様へのアクセス)
+2. `${KIRO_SPECS_DIR}/${TASKS_FILE}` からタスク仕様を読み込み
+3. 特定タスク ($1) の詳細と要件を抽出
+4. 関連文脈の読み込み:
    - `${KIRO_SPECS_DIR}/requirements.md`
    - `${KIRO_SPECS_DIR}/design.md`
    - `${KIRO_STEERING_DIR}/tech.md`
-5. Analyze local changes:
-   - `git diff main...HEAD --name-status` (changed files)
-   - `git diff main...HEAD` (detailed changes)
-   - `git log main..HEAD --oneline` (commit history)
-6. Contextual review based on task requirements and specifications
-7. Generate structured Japanese feedback
+5. ローカル変更の分析:
+   - `git diff develop...HEAD --name-status` (changed files)
+   - `git diff develop...HEAD` (detailed changes)
+   - `git log develop..HEAD --oneline` (commit history)
+6. タスク要件と仕様に基づく文脈的レビュー
+7. 構造化された日本語フィードバックの生成
 
-Review dimensions:
-- Task requirement compliance: Alignment with specified task requirements and acceptance criteria
-- Architecture compliance: Adherence to project structure and design patterns from tech.md
-- Code quality: Readability, maintainability, consistency with existing codebase
-- Bug risks: Error handling, edge cases, potential failure points
-- Testing: Coverage and test case validity for task functionality
-- Performance: Efficiency and scalability considerations
-- Security: Potential vulnerabilities and secure coding practices
-- Dependencies: Proper integration with prerequisite tasks
+レビュー観点:
+- タスク要件への準拠: 指定されたタスク要件と受け入れ基準への適合
+- アーキテクチャ準拠: プロジェクト構造とtech.mdのデザインパターンへの準拠
+- コード品質: 可読性、保守性、既存コードベースとの一貫性
+- バグリスク: エラーハンドリング、エッジケース、潜在的な障害点
+- テスト: タスク機能のカバレッジとテストケースの妥当性
+- パフォーマンス: 効率性とスケーラビリティの考慮
+- セキュリティ: 潜在的な脆弱性と安全なコーディング実践
+- 依存関係: 前提タスクとの適切な統合
 
-Output specification:
-- Path: `/reviews/review-task-{task-number}-{YYYYMMDD-HHMMSS}.md`
-- Format: Task summary, change summary, detailed review, improvement suggestions
-- Content sections:
+出力仕様:
+- パス: `/reviews/review-task-{task-number}-{YYYYMMDD-HHMMSS}.md`
+- 形式: タスクサマリー、変更サマリー、詳細レビュー、改善提案
+- 内容セクション:
   - タスク概要 (Task overview and requirements)
   - 変更サマリー (Change summary)
   - 詳細レビュー (Detailed review by dimension)
   - 改善提案 (Improvement suggestions with priorities)
   - 依存関係チェック (Dependency validation)
-- Style: Clear action items with priorities
-- Language: Japanese for all feedback content
+- スタイル: 優先度付きの明確なアクション項目
+- 言語: すべてのフィードバック内容は日本語
 
-Error recovery:
-- Missing task: Suggest valid task numbers from tasks.md
-- Invalid task format: Show expected format (X.Y)
-- Task specification files missing: Guide user to create proper project structure
-- No changes: Inform user and suggest workflow
-- Prerequisite task incomplete: Show dependency requirements
+エラー復旧:
+- タスクが見つからない: tasks.mdから有効なタスク番号を提案
+- 無効なタスク形式: 期待される形式 (X.Y) を表示
+- タスク仕様ファイル不在: 適切なプロジェクト構造作成をガイド
+- 変更なし: ユーザーに通知してワークフローを提案
+- 前提タスク未完了: 依存関係要件を表示

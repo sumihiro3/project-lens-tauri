@@ -23,6 +23,7 @@ export const useDockerStore = defineStore('docker', () => {
   const error = ref<string | null>(null);
   const showErrorDialog = ref<boolean>(false);
   const errorDialogType = ref<'not-installed' | 'not-running' | 'connection-failed'>('not-installed');
+  const isRetryMode = ref<boolean>(false);
 
   // 算出プロパティ
   const isMcpServerRunning = computed(() => mcpServerStatus.value?.isRunning || false);
@@ -52,7 +53,7 @@ export const useDockerStore = defineStore('docker', () => {
       const available = await invoke<boolean>('check_docker_available');
       isDockerAvailable.value = available;
       
-      if (!available) {
+      if (!available && !isRetryMode.value) {
         handleDockerError('not-installed');
       }
       
@@ -60,7 +61,9 @@ export const useDockerStore = defineStore('docker', () => {
     } catch (err) {
       const errorMessage = `Dockerの可用性確認中にエラーが発生しました: ${err}`;
       error.value = errorMessage;
-      handleDockerError('connection-failed', errorMessage);
+      if (!isRetryMode.value) {
+        handleDockerError('connection-failed', errorMessage);
+      }
       return { success: false, error: errorMessage };
     } finally {
       isLoading.value = false;
@@ -82,7 +85,7 @@ export const useDockerStore = defineStore('docker', () => {
       const running = await invoke<boolean>('is_docker_running');
       isDockerRunning.value = running;
       
-      if (!running) {
+      if (!running && !isRetryMode.value) {
         handleDockerError('not-running');
       }
       
@@ -90,7 +93,9 @@ export const useDockerStore = defineStore('docker', () => {
     } catch (err) {
       const errorMessage = `Docker実行状態の確認中にエラーが発生しました: ${err}`;
       error.value = errorMessage;
-      handleDockerError('connection-failed', errorMessage);
+      if (!isRetryMode.value) {
+        handleDockerError('connection-failed', errorMessage);
+      }
       return { success: false, error: errorMessage };
     } finally {
       isLoading.value = false;
@@ -247,8 +252,10 @@ export const useDockerStore = defineStore('docker', () => {
   function handleDockerError(errorType: 'not-installed' | 'not-running' | 'connection-failed', message?: string): void {
     errorDialogType.value = errorType;
     
-    // 通知を表示
-    const notificationId = notificationStore.dockerError(errorType, message);
+    // 初回エラー時のみ通知を表示（ダイアログが既に表示されている場合は通知をスキップ）
+    if (!showErrorDialog.value) {
+      const notificationId = notificationStore.dockerError(errorType, message);
+    }
     
     // エラーダイアログの表示を管理
     showErrorDialog.value = true;
@@ -262,9 +269,21 @@ export const useDockerStore = defineStore('docker', () => {
   }
 
   /**
+   * インストールガイド表示用（通知のボタンから呼び出される）
+   */
+  function showInstallationGuide(errorType: 'not-installed' | 'not-running' | 'connection-failed', message?: string): void {
+    errorDialogType.value = errorType;
+    // 通知は作成せず、ダイアログのみ表示
+    showErrorDialog.value = true;
+  }
+
+  /**
    * Docker環境の再試行
    */
   async function retryDockerEnvironment(): Promise<boolean> {
+    // 再試行モードを有効にして、個別チェック関数からの通知を抑制
+    isRetryMode.value = true;
+    
     try {
       await initializeDockerEnvironment();
       
@@ -278,11 +297,39 @@ export const useDockerStore = defineStore('docker', () => {
         return true;
       }
       
+      // エラーが継続している場合は通知を表示
+      if (!isDockerAvailable.value) {
+        notificationStore.error(
+          'Docker再試行失敗',
+          'Dockerが見つかりません。インストールを確認してください。'
+        );
+      } else if (!isDockerRunning.value) {
+        notificationStore.error(
+          'Docker再試行失敗',
+          'Dockerが実行されていません。Docker Desktopを起動してください。'
+        );
+      }
+      
       return false;
     } catch (error) {
       console.error('Docker再試行中にエラーが発生しました:', error);
+      notificationStore.error(
+        'Docker再試行エラー',
+        'Docker環境の確認中にエラーが発生しました。'
+      );
       return false;
+    } finally {
+      // 再試行モードを無効にする
+      isRetryMode.value = false;
     }
+  }
+
+  // カスタムイベントリスナーの設定
+  if (typeof window !== 'undefined') {
+    window.addEventListener('show-docker-error-dialog', (event) => {
+      const { errorType, message } = (event as CustomEvent).detail;
+      showInstallationGuide(errorType, message);
+    });
   }
 
   return {
@@ -314,6 +361,7 @@ export const useDockerStore = defineStore('docker', () => {
     // エラーハンドリング
     handleDockerError,
     closeErrorDialog,
+    showInstallationGuide,
     retryDockerEnvironment,
   };
 });

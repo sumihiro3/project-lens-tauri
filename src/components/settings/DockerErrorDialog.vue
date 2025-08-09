@@ -1,13 +1,11 @@
 <template lang="pug">
 .docker-error-dialog(v-if="visible")
-  .dialog-overlay(@click="onOverlayClick")
+  .dialog-overlay
   .dialog-content
     header.dialog-header
       .error-icon
         Icon(name="ph:warning-circle-fill")
       h2.dialog-title {{ errorTitle }}
-      button.close-button(@click="close")
-        Icon(name="ph:x")
     
     .dialog-body
       .error-message
@@ -44,7 +42,6 @@
           Icon(name="ph:spinner")
         .loading-text Docker環境を確認しています...
       .action-buttons(:class="{ 'action-buttons--hidden': isRetrying }")
-        button.btn.btn-secondary(@click="close" :disabled="isRetrying") キャンセル
         button.btn.btn-primary(@click="retry" :disabled="isRetrying")
           Icon(name="ph:arrow-clockwise" v-if="isRetrying")
           Icon(name="ph:play" v-else)
@@ -52,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDockerStore } from '~/stores/dockerStore'
 
 interface Props {
@@ -77,10 +74,6 @@ const props = withDefaults(defineProps<Props>(), {
   errorMessage: 'Dockerに関するエラーが発生しました'
 })
 
-const emit = defineEmits<{
-  close: []
-  retry: []
-}>()
 
 const dockerStore = useDockerStore()
 const isRetrying = ref(false)
@@ -177,40 +170,43 @@ const diagnosticInfo = computed<DiagnosticItem[]>(() => {
   return info
 })
 
-const onOverlayClick = (event: MouseEvent) => {
-  if (event.target === event.currentTarget) {
-    close()
-  }
-}
-
-const close = () => {
-  emit('close')
-}
 
 const retry = async () => {
   if (isRetrying.value) return
   
   isRetrying.value = true
   try {
-    // Docker環境の初期化を実行
-    await dockerStore.initializeDockerEnvironment()
+    // Docker環境の再試行を実行（通知も含む）
+    const success = await dockerStore.retryDockerEnvironment()
     
     // エラーが解決された場合はダイアログを閉じる
-    if (dockerStore.isDockerAvailable && dockerStore.isDockerRunning) {
-      close()
-    }
+    // （DockerStoreの retryDockerEnvironment でダイアログを閉じる処理を実行）
   } catch (error) {
     console.error('Docker再試行中にエラーが発生しました:', error)
   } finally {
     isRetrying.value = false
   }
-  
-  emit('retry')
+}
+
+// ESCキーでの閉じる機能を無効化
+const handleKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && props.visible) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
 }
 
 onMounted(() => {
   // インストールガイドの表示判定
   showInstallationGuide.value = props.errorType === 'not-installed'
+  
+  // ESCキーイベントリスナーを追加
+  document.addEventListener('keydown', handleKeydown, true)
+})
+
+onUnmounted(() => {
+  // ESCキーイベントリスナーを削除
+  document.removeEventListener('keydown', handleKeydown, true)
 })
 </script>
 
@@ -269,24 +265,6 @@ onMounted(() => {
   color: #262626;
 }
 
-.close-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #8c8c8c;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.close-button:hover {
-  background: #f5f5f5;
-  color: #262626;
-}
 
 .dialog-body {
   padding: 24px;

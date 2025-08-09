@@ -3038,8 +3038,10 @@ name = "project-lens"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "base64 0.21.7",
  "bollard",
  "chrono",
+ "lazy_static",
  "reqwest",
  "ring",
  "rusqlite",
@@ -3048,6 +3050,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+ "tempfile",
  "thiserror 1.0.69",
  "tokio",
 ]
