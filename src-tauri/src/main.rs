@@ -3,6 +3,7 @@
 
 // モジュールのインポート
 mod ai;
+mod auth;
 mod crypto;
 mod docker;
 mod mcp;

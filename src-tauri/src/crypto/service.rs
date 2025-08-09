@@ -238,6 +238,7 @@ impl CryptoService {
  * 機密データ（パスワード、キー等）を保持し、使用後に安全にメモリから削除する。
  * メモリダンプ攻撃やスワップファイルへの機密情報漏洩を防ぐために使用。
  */
+#[derive(Debug)]
 pub struct SecureBytes {
     /// 機密データを格納するバッファ
     data: Vec<u8>,
@@ -316,6 +317,7 @@ impl Drop for SecureBytes {
  * パスワード文字列を保持し、使用後に安全にメモリから削除する。
  * String型の代替として機密情報の取り扱いに使用。
  */
+#[derive(Debug)]
 pub struct SecureString {
     /// パスワード文字列のバイト配列
     bytes: SecureBytes,

@@ -38,6 +38,10 @@ bollard = "0.16.0"
 chrono = { version = "0.4.34", features = ["serde"] }
 # 非同期トレイト
 async-trait = "0.1.77"
+# グローバル静的変数
+lazy_static = "1.4.0"
+# Base64エンコード・デコード
+base64 = "0.21.0"
 
 [dev-dependencies]
 # テスト用の一時ファイル作成
