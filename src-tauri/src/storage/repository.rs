@@ -1134,3 +1134,134 @@ mod repository_tests {
         assert!(true, "データベース接続は正常");
     }
 }
+
+/// 統合リポジトリ
+/// 全てのリポジトリ機能を統合したメインリポジトリクラス
+/// SecureRepositoryから使用される
+pub struct Repository {
+    /// データベース接続
+    db_connection: DatabaseConnection,
+    /// 設定リポジトリ
+    config_repo: ConfigRepository,
+    /// チケットリポジトリ
+    ticket_repo: TicketRepository,
+    /// ワークスペースリポジトリ
+    workspace_repo: WorkspaceRepository,
+    /// プロジェクト重みリポジトリ
+    project_weight_repo: ProjectWeightRepository,
+    /// AI分析リポジトリ
+    ai_analysis_repo: AIAnalysisRepository,
+}
+
+impl Repository {
+    /// 新しい統合リポジトリを作成
+    /// 
+    /// # 引数
+    /// * `db_path` - データベースファイルのパス
+    /// 
+    /// # 戻り値
+    /// 初期化された統合リポジトリ
+    /// 
+    /// # エラー
+    /// データベース接続に失敗した場合
+    pub fn new(db_path: &str) -> Result<Self, DatabaseError> {
+        let db_path_buf = std::path::PathBuf::from(db_path);
+        let db_connection = DatabaseConnection::new(db_path_buf)?;
+        let conn = db_connection.get_connection();
+        
+        let config_repo = ConfigRepository::new(conn.clone());
+        let ticket_repo = TicketRepository::new(conn.clone());
+        let workspace_repo = WorkspaceRepository::new(conn.clone());
+        let project_weight_repo = ProjectWeightRepository::new(conn.clone());
+        let ai_analysis_repo = AIAnalysisRepository::new(conn.clone());
+        
+        Ok(Self {
+            db_connection,
+            config_repo,
+            ticket_repo,
+            workspace_repo,
+            project_weight_repo,
+            ai_analysis_repo,
+        })
+    }
+
+    // Backlogワークスペース設定関連のメソッド
+    
+    /// Backlogワークスペース設定を保存
+    pub fn save_backlog_workspace_config(&self, workspace: &BacklogWorkspaceConfig) -> Result<(), DatabaseError> {
+        self.workspace_repo.save_workspace(workspace)
+    }
+    
+    /// Backlogワークスペース設定をIDで取得
+    pub fn get_backlog_workspace_config(&self, workspace_id: &str) -> Result<Option<BacklogWorkspaceConfig>, DatabaseError> {
+        self.workspace_repo.get_workspace_by_id(workspace_id)
+    }
+    
+    /// 全Backlogワークスペース設定を取得
+    pub fn get_all_backlog_workspace_configs(&self) -> Result<Vec<BacklogWorkspaceConfig>, DatabaseError> {
+        self.workspace_repo.get_enabled_workspaces()
+    }
+    
+    /// Backlogワークスペース設定を削除
+    pub fn delete_backlog_workspace_config(&self, workspace_id: &str) -> Result<(), DatabaseError> {
+        self.workspace_repo.delete_workspace(workspace_id)
+    }
+
+    // チケット関連のメソッド
+    
+    /// チケットを保存
+    pub fn save_ticket(&self, ticket: &Ticket) -> Result<(), DatabaseError> {
+        self.ticket_repo.save_ticket(ticket)
+    }
+    
+    /// チケットをIDで取得
+    pub fn get_ticket_by_id(&self, ticket_id: &str) -> Result<Option<Ticket>, DatabaseError> {
+        self.ticket_repo.get_ticket_by_id(ticket_id)
+    }
+    
+    /// ワークスペースのチケット一覧を取得
+    pub fn get_tickets_by_workspace(&self, workspace_id: &str) -> Result<Vec<Ticket>, DatabaseError> {
+        self.ticket_repo.get_tickets_by_workspace(workspace_id)
+    }
+
+    // プロジェクト重み関連のメソッド
+    
+    /// プロジェクト重みを保存
+    pub fn save_project_weight(&self, project_weight: &ProjectWeight) -> Result<(), DatabaseError> {
+        self.project_weight_repo.save_project_weight(project_weight)
+    }
+    
+    /// プロジェクト重みをIDで取得
+    pub fn get_project_weight_by_id(&self, project_id: &str) -> Result<Option<ProjectWeight>, DatabaseError> {
+        self.project_weight_repo.get_project_weight_by_id(project_id)
+    }
+
+    // AI分析関連のメソッド
+    
+    /// AI分析結果を保存
+    pub fn save_ai_analysis(&self, analysis: &AIAnalysis) -> Result<(), DatabaseError> {
+        self.ai_analysis_repo.save_ai_analysis(analysis)
+    }
+    
+    /// AI分析結果をチケットIDで取得
+    pub fn get_ai_analysis_by_ticket_id(&self, ticket_id: &str) -> Result<Option<AIAnalysis>, DatabaseError> {
+        self.ai_analysis_repo.get_ai_analysis_by_ticket_id(ticket_id)
+    }
+
+    // 設定関連のメソッド
+    
+    /// 設定を保存
+    pub fn save_config(&self, key: &str, value: &str) -> Result<(), DatabaseError> {
+        self.config_repo.save_config(key, value)
+    }
+    
+    /// 設定を取得
+    pub fn get_config(&self, key: &str) -> Result<Option<String>, DatabaseError> {
+        self.config_repo.get_config(key)
+    }
+    
+    /// データベースバージョンを取得
+    pub fn get_db_version(&self) -> Result<i32, DatabaseError> {
+        self.db_connection.get_db_version()
+    }
+}

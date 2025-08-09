@@ -125,6 +125,81 @@ impl BacklogWorkspaceConfig {
     }
 }
 
+/// AIプロバイダー設定データモデル（技術仕様書準拠）
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AIProviderConfig {
+    pub id: String,
+    pub provider_type: AIProviderType,
+    pub provider_name: String,
+    pub api_key_encrypted: String,
+    pub encryption_version: String,  // 技術仕様書準拠: 暗号化バージョン管理
+    pub model_name: String,
+    pub enabled: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// AIプロバイダー種別
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AIProviderType {
+    OpenAI,
+    Claude,
+    Gemini,
+}
+
+impl std::fmt::Display for AIProviderType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AIProviderType::OpenAI => write!(f, "OpenAI"),
+            AIProviderType::Claude => write!(f, "Claude"),
+            AIProviderType::Gemini => write!(f, "Gemini"),
+        }
+    }
+}
+
+impl AIProviderConfig {
+    /// 新しいAIプロバイダー設定を作成
+    pub fn new(
+        id: String,
+        provider_type: AIProviderType,
+        provider_name: String,
+        api_key_encrypted: String,
+        encryption_version: String,
+        model_name: String,
+    ) -> Self {
+        let now = Utc::now();
+        Self {
+            id,
+            provider_type,
+            provider_name,
+            api_key_encrypted,
+            encryption_version,
+            model_name,
+            enabled: true,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    /// デフォルトモデル名を取得
+    pub fn get_default_model(&self) -> &str {
+        match self.provider_type {
+            AIProviderType::OpenAI => "gpt-4",
+            AIProviderType::Claude => "claude-3.5-sonnet",
+            AIProviderType::Gemini => "gemini-pro",
+        }
+    }
+
+    /// プロバイダー表示名を取得
+    pub fn get_display_name(&self) -> String {
+        if self.provider_name.is_empty() {
+            self.provider_type.to_string()
+        } else {
+            self.provider_name.clone()
+        }
+    }
+}
+
 /// AI分析結果データモデル（技術仕様書準拠）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIAnalysis {
